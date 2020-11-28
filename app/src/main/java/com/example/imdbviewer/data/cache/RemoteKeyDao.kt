@@ -17,6 +17,6 @@ interface RemoteKeyDao {
     suspend fun remoteKeysId(id:String):RemoteKey?
 
 
-    @Query("DELETE FROM remote_keys")
-    suspend fun clearRemoteKeys()
+    @Query("DELETE FROM remote_keys WHERE categoryType=:categoryType")
+    suspend fun clearRemoteKeys(categoryType:String)
 }

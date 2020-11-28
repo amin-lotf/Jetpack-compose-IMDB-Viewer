@@ -6,107 +6,127 @@ import androidx.paging.LoadType
 import androidx.paging.PagingState
 import androidx.paging.RemoteMediator
 import androidx.room.withTransaction
+import com.example.imdbviewer.data.cache.CategoryType
 import com.example.imdbviewer.data.cache.MovieRoomDatabase
 import com.example.imdbviewer.data.network.api.ImdbApi
-import com.example.imdbviewer.models.Movie
-import com.example.imdbviewer.models.RemoteKey
+import com.example.imdbviewer.models.*
 import retrofit2.HttpException
 import java.io.IOException
 import java.io.InvalidObjectException
 
+@Suppress("UNCHECKED_CAST")
 @OptIn(ExperimentalPagingApi::class)
-class ImdbRemoteMediator(
+class ImdbRemoteMediator<T:RapidItem>(
     private val query: String,
+    private val categoryType: CategoryType,
     private val service: ImdbApi,
     private val movieDatabase: MovieRoomDatabase
-) : RemoteMediator<Int, Movie>() {
+) : RemoteMediator<Int, T>() {
 
     private val TAG="Aminjoon"
 
-    override suspend fun load(loadType: LoadType, state: PagingState<Int, Movie>): MediatorResult {
+    override suspend fun load(loadType: LoadType, state: PagingState<Int, T>): MediatorResult {
         Log.d(TAG, "load: $loadType")
         val page: Int = when (loadType) {
             LoadType.REFRESH -> {
                 val remoteKey=getRemoteKeyClosestToCurrentPosition(state)
-                remoteKey?.nextKey?.minus(1)?: IMDB_STARTIG_PAGE
+                remoteKey?.nextKey?.minus(1)?: IMDB_STARTING_PAGE
             }
             LoadType.PREPEND -> {
-                val remoteKey= getRemoteKeyForFirstItem(state)
-                    ?: throw InvalidObjectException("Remote key should not be null")
-
-                remoteKey.prevKey ?: return MediatorResult.Success(endOfPaginationReached = true)
+                1
+//                val remoteKey= getRemoteKeyForFirstItem(state)
+//                    ?: throw InvalidObjectException("Remote key should not be null")
+//
+//                remoteKey.prevKey ?: return MediatorResult.Success(endOfPaginationReached = true)
 
             }
             LoadType.APPEND -> {
-                val remoteKey=getRemoteKeyForLastItem(state)
-                if(remoteKey?.nextKey == null){
-                    throw InvalidObjectException("Remote key should not be null for $loadType")
-                }
-                remoteKey.nextKey
+                1
+//                val remoteKey=getRemoteKeyForLastItem(state)
+//                if(remoteKey?.nextKey == null){
+//                    throw InvalidObjectException("Remote key should not be null for $loadType")
+//                }
+//                remoteKey.nextKey
             }
         }
 
         try {
-            val apiResponse = service.getMoviesByCategory(query)
-            val movies = apiResponse.items
+            val apiResponse = when(categoryType){
+                CategoryType.Movies -> service.getRapidMoviesByCategory(query,page = page)
+                CategoryType.TVs -> service.getRapidTVsByCategory(query,page = page)
+            }
 
-            //Simulating Pagination since the api sends all data at same time without pagination
-            val startIndex = ((page - 1) * state.config.pageSize).coerceIn(0..movies.size)
-            val endIndex = (startIndex + state.config.pageSize).coerceIn(startIndex..movies.size)
-            val curMovies = movies.subList(startIndex, endIndex).onEach { it.category=query }
+            Log.d(
+                TAG,
+                "load: status: ${apiResponse.status} message: ${apiResponse.statusMessage} Items: ${apiResponse.results}"
+            )
 
-            val endOfPaginationReached = curMovies.isEmpty()
+            val endOfPaginationReached = apiResponse.items?.isEmpty()?:false
 
             movieDatabase.withTransaction {
                 if (loadType == LoadType.REFRESH) {
-                    movieDatabase.remoteKeyDao().clearRemoteKeys()
-                    movieDatabase.movieDao().deleteAll(query)
+                    movieDatabase.remoteKeyDao().clearRemoteKeys(categoryType = categoryType.title)
+                    when(categoryType){
+                        CategoryType.Movies -> movieDatabase.movieDao().deleteAllRapidMovies()
+                        CategoryType.TVs -> movieDatabase.tvDao().deleteAllRapidTVs()
+                        else-> throw IllegalArgumentException("${categoryType.title}  does not exist in database")
+                    }
                 }
 
-                val prevKey = if (page == IMDB_STARTIG_PAGE) null else page - 1
+                val prevKey = if (page == IMDB_STARTING_PAGE) null else page - 1
                 val nextKey = if (endOfPaginationReached) null else page + 1
 
-                val keys= curMovies.map {
-                    RemoteKey(id=it.id,prevKey = prevKey,nextKey = nextKey)
+                val keys= apiResponse.items?.map {
+                    RemoteKey(id=it.imdbId,prevKey = prevKey,nextKey = nextKey,categoryType = categoryType.title)
+                }
+                keys?.let {
+                    movieDatabase.remoteKeyDao().insertAll(keys)
                 }
 
-                movieDatabase.remoteKeyDao().insertAll(keys)
-                movieDatabase.movieDao().insetMovies(curMovies)
+                when(categoryType){
+                    CategoryType.Movies -> movieDatabase.movieDao().insertRapidMovies(apiResponse.items as List<RapidMovie>)
+                    CategoryType.TVs -> movieDatabase.tvDao().insertRapidTVs(apiResponse.items as List<RapidTV>)
+                    else->throw IllegalArgumentException("${categoryType.title}  does not exist in database")
+                }
             }
             return MediatorResult.Success(endOfPaginationReached = endOfPaginationReached)
 
 
         } catch (exception: IOException) {
+            Log.d(TAG, "load: error: IO")
+            exception.printStackTrace()
             return MediatorResult.Error(exception)
         } catch (exception: HttpException) {
+            Log.d(TAG, "load: error: Http")
+            exception.printStackTrace()
             return MediatorResult.Error(exception)
         }
 
     }
 
-    private suspend fun getRemoteKeyForLastItem(state: PagingState<Int, Movie>):RemoteKey?{
+    private suspend fun getRemoteKeyForLastItem(state: PagingState<Int, T>):RemoteKey?{
         return state.pages.lastOrNull { it.data.isNotEmpty() }?.data?.lastOrNull()?.let { movie->
-            movieDatabase.remoteKeyDao().remoteKeysId(movie.id)
+            movieDatabase.remoteKeyDao().remoteKeysId(movie.imdbId)
         }
     }
 
-    private suspend fun getRemoteKeyForFirstItem(state: PagingState<Int, Movie>):RemoteKey?{
+    private suspend fun getRemoteKeyForFirstItem(state: PagingState<Int, T>):RemoteKey?{
         return state.pages.firstOrNull { it.data.isNotEmpty() }?.data?.firstOrNull()?.let { movie->
-            movieDatabase.remoteKeyDao().remoteKeysId(movie.id)
+            movieDatabase.remoteKeyDao().remoteKeysId(movie.imdbId)
         }
     }
 
     private suspend fun getRemoteKeyClosestToCurrentPosition(
-        state: PagingState<Int, Movie>
+        state: PagingState<Int, T>
     ):RemoteKey?{
         return state.anchorPosition?.let { position->
-            state.closestItemToPosition(position)?.id?.let { movieId->
+            state.closestItemToPosition(position)?.imdbId?.let { movieId->
                 movieDatabase.remoteKeyDao().remoteKeysId(movieId)
             }
         }
     }
 
     companion object {
-        const val IMDB_STARTIG_PAGE = 1
+        const val IMDB_STARTING_PAGE = 1
     }
 }

@@ -1,26 +1,58 @@
 package com.example.imdbviewer.data.cache
 
 
+sealed class NewCategory(
+    val id: Long,
+    val name: String,
+    val label: String,
+    val categoryType: CategoryType
+) {
+    //MOVIE
+    object BoxOfficeMovies :
+        NewCategory(1, "get-boxoffice-movies", "Box Office", CategoryType.Movies)
 
+    object RecentlyAddedMovies :
+        NewCategory(2, "get-recently-added-movies", "Recently Added", CategoryType.Movies)
 
-sealed class Category(val id:Long, val name:String, val label:String,val categoryType: CategoryType){
-    object Top250Movies: Category(1,"Top250Movies","Top 250",CategoryType.Movies)
-    object InTheaters: Category(2,"InTheaters","In Theaters",CategoryType.Movies)
-    object ComingSoon: Category(3,"ComingSoon","Coming Soon",CategoryType.Movies)
-    object Top250TVs: Category(4,"Top250TVs","Top 250",CategoryType.TVs)
-    object MostPopularTVs: Category(5,"MostPopularTVs","Most Popular",CategoryType.TVs)
-    object BoxOffice: Category(6,"BoxOffice","Current",CategoryType.BoxOffice)
-   // object BoxOfficeAllTime: Category(7,"BoxOfficeAllTime","All Time",CategoryType.BoxOffice)
+    object ComingSoonMovies :
+        NewCategory(3, "get-upcoming-movies", "Coming Soon", CategoryType.Movies)
+
+    object TrendingMovies : NewCategory(4, "get-trending-movies", "Trending", CategoryType.Movies)
+    object NowPlayingMovies :
+        NewCategory(5, "get-nowplaying-movies", "Now Playing", CategoryType.Movies)
+
+    //TV
+    object AiringTodayTVs :
+        NewCategory(6, "get-airingtoday-shows", "Airing Today", CategoryType.TVs)
+
+    object RecentlyAddedTVs :
+        NewCategory(7, "get-recently-added-shows", "Recently Added", CategoryType.TVs)
+
+    object TrendingTVs : NewCategory(8, "get-trending-shows", "Trending", CategoryType.TVs)
+    object PopularTVs : NewCategory(9, "get-popular-shows", "Popular", CategoryType.TVs)
+    object OnAirTVs : NewCategory(10, "get-onair-shows", "On Air", CategoryType.TVs)
+
 }
 
-sealed class CategoryType(val title:String){
-    object Movies:CategoryType(title = "Movie")
-    object TVs:CategoryType(title = "TV")
-    object BoxOffice:CategoryType(title = "Box Office")
 
+sealed class CategoryType(val title: String) {
+    object Movies : CategoryType(title = "Movie")
+    object TVs : CategoryType(title = "TV")
 }
 
-val MoviesCategories= listOf(Category.Top250Movies,Category.ComingSoon,Category.InTheaters)
-val TVsCategories=listOf(Category.Top250TVs,Category.MostPopularTVs)
-val BoxOfficeCategories=listOf<Category>()
+val MoviesCategories = listOf(
+    NewCategory.TrendingMovies,
+    NewCategory.BoxOfficeMovies,
+    NewCategory.ComingSoonMovies,
+    NewCategory.NowPlayingMovies,
+    NewCategory.RecentlyAddedMovies
+)
+val TVsCategories = listOf(
+    NewCategory.AiringTodayTVs,
+    NewCategory.OnAirTVs,
+    NewCategory.PopularTVs,
+    NewCategory.TrendingTVs,
+    NewCategory.RecentlyAddedTVs
+)
+
 

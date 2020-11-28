@@ -6,14 +6,17 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.imdbviewer.models.Movie
+import com.example.imdbviewer.models.RapidMovie
+import com.example.imdbviewer.models.RapidTV
 import com.example.imdbviewer.models.RemoteKey
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 
-@Database(entities = [Movie::class,RemoteKey::class],version = 2, exportSchema = false)
+@Database(entities = [Movie::class,RemoteKey::class,RapidMovie::class,RapidTV::class],version = 5, exportSchema = false)
 abstract class MovieRoomDatabase:RoomDatabase() {
     abstract fun movieDao():MovieDao
+    abstract fun tvDao():TVDao
     abstract fun remoteKeyDao():RemoteKeyDao
 
     companion object{

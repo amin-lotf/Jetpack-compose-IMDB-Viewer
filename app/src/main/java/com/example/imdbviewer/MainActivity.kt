@@ -20,6 +20,7 @@ import com.example.imdbviewer.theme.IMDBViewerTheme
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.compose.runtime.getValue
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.example.imdbviewer.ui.detailscreen.DetailScreen
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 @ExperimentalCoroutinesApi
@@ -37,9 +38,10 @@ class MainActivity : AppCompatActivity() {
 
                 // A surface container using the 'background' color from the theme
                 Surface(color = MaterialTheme.colors.background,modifier = Modifier.fillMaxHeight()) {
-                    MainScreen(
-                            mainViewModel,
-                            modifier = Modifier.fillMaxSize())
+//                    MainScreen(
+//                            mainViewModel,
+//                            modifier = Modifier.fillMaxSize())
+                    DetailScreen()
                 }
             }
         }
