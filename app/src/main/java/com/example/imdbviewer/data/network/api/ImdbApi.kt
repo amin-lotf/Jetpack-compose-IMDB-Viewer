@@ -7,6 +7,7 @@ import com.example.imdbviewer.data.network.RapidTVResponse
 import com.example.imdbviewer.models.Movie
 import com.example.imdbviewer.models.RapidMovieDetails
 import com.example.imdbviewer.models.RapidTVDetails
+import com.example.imdbviewer.util.RAPID_KEY
 import retrofit2.Call
 import retrofit2.http.GET
 import retrofit2.http.Path
@@ -16,43 +17,42 @@ interface ImdbApi {
 
     @GET("/")
     suspend fun getRapidMoviesByCategory(
-        @Query("type") type:String,
-        @Query("page") page:Int
-    ):RapidMovieResponse
+        @Query("type") type: String,
+        @Query("page") page: Int
+    ): RapidMovieResponse
 
     @GET("/")
     suspend fun getRapidTVsByCategory(
-        @Query("type") type:String,
-        @Query("page") page:Int
-    ):RapidTVResponse
+        @Query("type") type: String,
+        @Query("page") page: Int
+    ): RapidTVResponse
 
 
     @GET("/")
     suspend fun getRapidMovieDetails(
-        @Query("type") type:String,
-        @Query("imdb") imdbId:String
-    ):RapidMovieDetails
+        @Query("type") type: String,
+        @Query("imdb") imdbId: String
+    ): RapidMovieDetails
 
     @GET("/")
     suspend fun getRapidTVDetails(
-        @Query("type") type:String,
-        @Query("imdb") imdbId:String
-    ):RapidTVDetails
+        @Query("type") type: String,
+        @Query("imdb") imdbId: String
+    ): RapidTVDetails
 
 
+//    //TODO: remove if no use
+//    @GET("{type}/${IMDB_CLIENT_ID}")
+//    suspend fun getMoviesByCategory(
+//        @Path("type") type:String
+//    ):ImdbResponse
 
-    //TODO: remove if no use
-    @GET("{type}/${IMDB_CLIENT_ID}")
-    suspend fun getMoviesByCategory(
-        @Path("type") type:String
-    ):ImdbResponse
 
+    companion object {
 
-    companion object{
-        const val IMDB_CLIENT_ID=BuildConfig.IMDB_API_ACCESS_KEY
-        const val RAPID_API_KEY=BuildConfig.RAPID_API_ACESS_KEY
-        const val BASE_URL="https://movies-tvshows-data-imdb.p.rapidapi.com"
-        const val TV_DETAILS_TYPE="get-show-details"
-        const val MOVIE_DETAILS_TYPE="get-movie-details"
+        const val RAPID_API_KEY = RAPID_KEY
+        const val BASE_URL = "https://movies-tvshows-data-imdb.p.rapidapi.com"
+        const val TV_DETAILS_TYPE = "get-show-details"
+        const val MOVIE_DETAILS_TYPE = "get-movie-details"
     }
 }

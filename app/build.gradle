@@ -16,8 +16,6 @@ android {
         versionCode 1
         versionName "1.0"
 
-        buildConfigField("String","RAPID_API_ACESS_KEY",rapidapid_access_key)
-        buildConfigField("String","IMDB_API_ACCESS_KEY",imdb_api_access_key)
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
