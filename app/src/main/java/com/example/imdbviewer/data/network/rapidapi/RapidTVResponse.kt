@@ -1,7 +1,7 @@
-package com.example.imdbviewer.data.network
+package com.example.imdbviewer.data.network.rapidapi
 
 import com.example.imdbviewer.data.cache.CategoryType
-import com.example.imdbviewer.data.network.api.RapidResponse
+import com.example.imdbviewer.data.network.rapidapi.api.RapidResponse
 import com.example.imdbviewer.models.Movie
 import com.example.imdbviewer.models.RapidMovie
 import com.example.imdbviewer.models.RapidTV
@@ -27,4 +27,4 @@ data class RapidTVResponse(
     @Expose
     @SerializedName("Total_results")
     override val totalItems: Int?
-): RapidResponse<RapidTV>(items,status,statusMessage,results,totalItems)
+): RapidResponse(items,status,statusMessage,results,totalItems)

@@ -9,7 +9,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
 data class MainScreenViewState(
-     val moviesViewState: CategoryViewState<RapidMovie> =CategoryViewState(),
-     val tvsViewState: CategoryViewState<RapidTV> =CategoryViewState(),
+     val moviesViewState: CategoryViewState =CategoryViewState(),
+     val tvsViewState: CategoryViewState =CategoryViewState(),
+     val inSearchMode:Boolean=false,
+     val searchQuery:String=""
 ) {
 }

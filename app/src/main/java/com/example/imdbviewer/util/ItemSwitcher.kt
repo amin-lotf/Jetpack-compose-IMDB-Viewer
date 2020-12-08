@@ -7,6 +7,7 @@ import androidx.compose.animation.core.createAnimation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.AmbientAnimationClock
 import androidx.compose.ui.platform.AnimationClockAmbient
 
 @Composable
@@ -28,7 +29,7 @@ fun <T> ItemSwitcher(
 
         keys.mapTo(state.items) { key ->
             ItemTransitionItem(key) { children ->
-                val clock = AnimationClockAmbient.current.asDisposableClock()
+                val clock = AmbientAnimationClock.current.asDisposableClock()
                 val visible = key == current
 
                 val anim = remember(clock, transitionDefinition) {

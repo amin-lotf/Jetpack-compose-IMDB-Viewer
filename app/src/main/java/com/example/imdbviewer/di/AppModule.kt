@@ -1,13 +1,10 @@
 package com.example.imdbviewer.di
 
 import android.content.Context
-import com.example.imdbviewer.BuildConfig
-import com.example.imdbviewer.data.cache.MovieDao
-import com.example.imdbviewer.data.cache.MovieRoomDatabase
-import com.example.imdbviewer.data.cache.RemoteKeyDao
-import com.example.imdbviewer.data.cache.TVDao
-import com.example.imdbviewer.data.network.api.ImdbApi
-import com.example.imdbviewer.data.network.api.ImdbApi.Companion.BASE_URL
+import com.example.imdbviewer.data.cache.*
+import com.example.imdbviewer.data.network.tmdb.api.TmdbApi
+import com.example.imdbviewer.data.network.tmdb.api.TmdbApi.Companion.BASE_URL
+
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dagger.Module
@@ -16,8 +13,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ApplicationComponent
 import dagger.hilt.android.qualifiers.ApplicationContext
 import okhttp3.Cache
-import okhttp3.CacheControl
-import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -33,6 +28,9 @@ object AppModule {
     @Provides
     fun provideMovieDatabase(@ApplicationContext context: Context): MovieRoomDatabase =
         MovieRoomDatabase.getDatabase(context)
+
+
+
 
 
     @Singleton
@@ -66,17 +64,17 @@ object AppModule {
 
         return OkHttpClient.Builder()
             .cache(cache)
-            .addNetworkInterceptor(Interceptor{chain->
-                val original=chain.request()
-
-                val requestBuilder=original.newBuilder()
-                    .header("x-rapidapi-key", BuildConfig.RAPID_API_ACESS_KEY)
-                    .header("x-rapidapi-host","movies-tvshows-data-imdb.p.rapidapi.com")
-                    .header("useQueryString","true")
-
-                val request=requestBuilder.build()
-                chain.proceed(request)
-            })
+//            .addNetworkInterceptor(Interceptor{chain->
+//                val original=chain.request()
+//
+//                val requestBuilder=original.newBuilder()
+//                    .header("x-rapidapi-key", RAPID_KEY)
+//                    .header("x-rapidapi-host","movies-tvshows-data-imdb.p.rapidapi.com")
+//                    .header("useQueryString","true")
+//
+//                val request=requestBuilder.build()
+//                chain.proceed(request)
+//            })
             .connectTimeout(100,TimeUnit.SECONDS)
             .readTimeout(100,TimeUnit.SECONDS)
             .build()
@@ -93,7 +91,7 @@ object AppModule {
 
     @Singleton
     @Provides
-    fun provideIMDBApi(retrofit: Retrofit): ImdbApi =
-        retrofit.create(ImdbApi::class.java)
+    fun provideIMDBApi(retrofit: Retrofit): TmdbApi =
+        retrofit.create(TmdbApi::class.java)
 }
 
