@@ -1,15 +1,18 @@
 package com.example.imdbviewer.data
 
-import android.util.Log
 import androidx.paging.*
 import com.example.imdbviewer.data.cache.*
 import com.example.imdbviewer.data.network.tmdb.TMDbPagingSource
 import com.example.imdbviewer.data.network.tmdb.api.TmdbApi
+import com.example.imdbviewer.models.tmdb.item.TmdbItemDetails
 import com.example.imdbviewer.models.tmdb.item.TmdbListItem
 import com.example.imdbviewer.util.TMDB_KEY
 import com.example.imdbviewer.util.mapToItemDetails
 import com.example.imdbviewer.util.mapToListItem
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -17,15 +20,32 @@ import javax.inject.Singleton
 @Singleton
 class Repository @Inject constructor(
     private val tmdbApi: TmdbApi,
-    private val movieDao: MovieDao,
-    private val tvDao: TVDao,
-    private val remoteKeyDao: RemoteKeyDao
+    private val tmdbDao: TmdbDao
 ) {
     val TAG = "aminjoon"
 
+    fun getSavedItems()=
+        tmdbDao.getFavorites()
 
-    suspend fun getTmdbItemDetails(itemId: Int, type: CategoryType) =
-        flow {
+    suspend fun updateTmdbFavoriteState(tmdbItemDetails: TmdbItemDetails,isFavorite:Boolean){
+        if (isFavorite){
+            val tmdbItem=TmdbListItem(
+                id = tmdbItemDetails.id,
+                title = tmdbItemDetails.title,
+                posterPath = tmdbItemDetails.posterPath,
+                voteAverage = tmdbItemDetails.voteAverage,
+                year = tmdbItemDetails.releaseYear,
+                category = tmdbItemDetails.category
+            )
+            tmdbDao.insertTmdbItem(tmdbItem)
+        }else{
+            tmdbDao.deleteItem(tmdbItemDetails.id)
+        }
+    }
+
+
+     fun getTmdbItemDetails(itemId: Int, type: CategoryType):Flow<TmdbItemDetails> {
+        val tmdbItemFlow=flow {
             val response = when (type) {
                 CategoryType.Movies -> tmdbApi.getMovieDetails(
                     movieId = itemId,
@@ -37,9 +57,17 @@ class Repository @Inject constructor(
                 )
             }
             val details = response.body()
-            emit(mapToItemDetails(details))
 
+            emit(mapToItemDetails(details,type))
         }
+        return combine(
+            tmdbItemFlow,
+            tmdbDao.getItem(itemId).map { it!=null }
+        ){tmdbItem,isSaved->
+            tmdbItem.copy(isFavorite = isSaved)
+        }
+
+    }
 
     fun getTMDbItemsByCategory(category: Category) =
         Pager(
@@ -95,7 +123,7 @@ class Repository @Inject constructor(
         }
         val tmdbResponse = response.body()
         if (response.isSuccessful && tmdbResponse != null) {
-            return tmdbResponse.results.map { mapToListItem(it) }
+            return tmdbResponse.results.map { mapToListItem(it,category.categoryType) }
         } else {
             throw IOException("Failed to catch the list from server")
         }

@@ -20,67 +20,69 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 For support, please feel free to contact me at https://www.linkedin.com/in/syedabsar */
 
 
-data class TmdbTVDetails (
-	@Expose
-	@SerializedName("backdrop_path") val backdrop_path : String?,
-	@Expose
-	@SerializedName("created_by") val created_by : List<CreatedBy>?,
-	@Expose
-	@SerializedName("episode_run_time") val episode_run_time : List<Int>?,
-	@Expose
-	@SerializedName("first_air_date") val first_air_date : String?,
-	@Expose
-	@SerializedName("genres") val genres : List<Genre>?,
-	@Expose
-	@SerializedName("homepage") val homepage : String?,
-	@Expose
-	@SerializedName("id") val id : Int,
-	@Expose
-	@SerializedName("in_production") val in_production : Boolean?,
-	@Expose
-	@SerializedName("languages") val languages : List<String>?,
-	@Expose
-	@SerializedName("last_air_date") val last_air_date : String?,
-	@Expose
-	@SerializedName("last_episode_to_air") val last_episodeToAir : LastEpisodeToAir?,
-	@Expose
-	@SerializedName("name") val name : String?,
-	@Expose
-	@SerializedName("next_episode_to_air") val next_episodeToAir : NextEpisodeToAir?,
-	@Expose
-	@SerializedName("number_of_episodes") val number_of_episodes : Int?,
-	@Expose
-	@SerializedName("number_of_seasons") val number_of_seasons : Int?,
-	@Expose
-	@SerializedName("origin_country") val origin_country : List<String>?,
-	@Expose
-	@SerializedName("original_language") val original_language : String?,
-	@Expose
-	@SerializedName("original_name") val original_name : String?,
-	@Expose
-	@SerializedName("overview") val overview : String?,
-	@Expose
-	@SerializedName("popularity") val popularity : Double?,
-	@Expose
-	@SerializedName("poster_path") val poster_path : String?,
-	@Expose
-	@SerializedName("production_companies") val production_companies : List<ProductionCompanies>?,
-	@Expose
-	@SerializedName("production_countries") val production_countries : List<ProductionCountries>?,
-	@Expose
-	@SerializedName("seasons") val seasons : List<Seasons>?,
-	@Expose
-	@SerializedName("spoken_languages") val spoken_languages : List<SpokenLanguages>?,
-	@Expose
-	@SerializedName("status") val status : String?,
-	@Expose
-	@SerializedName("tagline") val tagline : String?,
-	@Expose
-	@SerializedName("type") val type : String?,
-	@Expose
-	@SerializedName("vote_average") val vote_average : Double?,
-	@Expose
-	@SerializedName("vote_count") val vote_count : Int?,
-	@Expose
-	@SerializedName("credits") val credits : Credits?
+data class TmdbTVDetails(
+    @Expose
+    @SerializedName("backdrop_path") val backdrop_path: String?,
+    @Expose
+    @SerializedName("created_by") val created_by: List<CreatedBy>?,
+    @Expose
+    @SerializedName("episode_run_time") val episode_run_time: List<Int>?,
+    @Expose
+    @SerializedName("first_air_date") val first_air_date: String?,
+    @Expose
+    @SerializedName("genres") val genres: List<Genre>?,
+    @Expose
+    @SerializedName("homepage") val homepage: String?,
+    @Expose
+    @SerializedName("id") val id: Int,
+    @Expose
+    @SerializedName("in_production") val in_production: Boolean?,
+    @Expose
+    @SerializedName("languages") val languages: List<String>?,
+    @Expose
+    @SerializedName("last_air_date") val last_air_date: String?,
+    @Expose
+    @SerializedName("last_episode_to_air") val last_episodeToAir: LastEpisodeToAir?,
+    @Expose
+    @SerializedName("name") val name: String?,
+    @Expose
+    @SerializedName("next_episode_to_air") val next_episodeToAir: NextEpisodeToAir?,
+    @Expose
+    @SerializedName("number_of_episodes") val number_of_episodes: Int?,
+    @Expose
+    @SerializedName("number_of_seasons") val number_of_seasons: Int?,
+    @Expose
+    @SerializedName("origin_country") val origin_country: List<String>?,
+    @Expose
+    @SerializedName("original_language") val original_language: String?,
+    @Expose
+    @SerializedName("original_name") val original_name: String?,
+    @Expose
+    @SerializedName("overview") val overview: String?,
+    @Expose
+    @SerializedName("popularity") val popularity: Double?,
+    @Expose
+    @SerializedName("poster_path") val poster_path: String?,
+    @Expose
+    @SerializedName("production_companies") val production_companies: List<ProductionCompanies>?,
+    @Expose
+    @SerializedName("production_countries") val production_countries: List<ProductionCountries>?,
+    @Expose
+    @SerializedName("seasons") val seasons: List<Seasons>?,
+    @Expose
+    @SerializedName("spoken_languages") val spoken_languages: List<SpokenLanguages>?,
+    @Expose
+    @SerializedName("status") val status: String?,
+    @Expose
+    @SerializedName("tagline") val tagline: String?,
+    @Expose
+    @SerializedName("type") val type: String?,
+    @Expose
+    @SerializedName("vote_average") val vote_average: Double?,
+    @Expose
+    @SerializedName("vote_count") val vote_count: Int?,
+    @Expose
+    @SerializedName("credits") val credits: Credits?,
+
+    val isFavorite: Boolean
 )

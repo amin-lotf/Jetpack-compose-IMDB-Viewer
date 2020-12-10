@@ -5,7 +5,7 @@ object ImageConfig {
     private const val LOGO_SIZE = "w45"
     private const val POSTER_SIZE = "w154"
     private const val PROFILE_SIZE = "w185"
-    private const val BACKDROP_SIZE = "w300"
+    private const val BACKDROP_SIZE = "w1280"
 
     val posterPath: String
         get() = "$BASE_URL$POSTER_SIZE"

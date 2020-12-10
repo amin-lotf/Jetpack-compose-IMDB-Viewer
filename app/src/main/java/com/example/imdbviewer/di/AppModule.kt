@@ -31,22 +31,10 @@ object AppModule {
 
 
 
-
-
     @Singleton
     @Provides
-    fun provideMovieDao(movieRoomDatabase: MovieRoomDatabase): MovieDao =
-        movieRoomDatabase.movieDao()
-
-    @Singleton
-    @Provides
-    fun provideTVDao(movieRoomDatabase: MovieRoomDatabase):TVDao =
-        movieRoomDatabase.tvDao()
-
-    @Singleton
-    @Provides
-    fun provideRemoteKeyDao(movieRoomDatabase: MovieRoomDatabase):RemoteKeyDao =
-        movieRoomDatabase.remoteKeyDao()
+    fun provideTmdbDao(movieRoomDatabase: MovieRoomDatabase)=
+        movieRoomDatabase.tmdbDao()
 
     @Singleton
     @Provides
@@ -64,17 +52,6 @@ object AppModule {
 
         return OkHttpClient.Builder()
             .cache(cache)
-//            .addNetworkInterceptor(Interceptor{chain->
-//                val original=chain.request()
-//
-//                val requestBuilder=original.newBuilder()
-//                    .header("x-rapidapi-key", RAPID_KEY)
-//                    .header("x-rapidapi-host","movies-tvshows-data-imdb.p.rapidapi.com")
-//                    .header("useQueryString","true")
-//
-//                val request=requestBuilder.build()
-//                chain.proceed(request)
-//            })
             .connectTimeout(100,TimeUnit.SECONDS)
             .readTimeout(100,TimeUnit.SECONDS)
             .build()

@@ -1,5 +1,8 @@
 package com.example.imdbviewer.data.cache
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+
 
 sealed class Category(
     val id: Long,
@@ -30,10 +33,15 @@ sealed class Category(
 
 }
 
+data class ItemType(
+    val id:Int=0,
+    val type: CategoryType?=null
+)
 
-sealed class CategoryType(val title: String,val label: String) {
-    object Movies : CategoryType(title = "MOVIE",label = "movie")
-    object TVs : CategoryType(title = "TV",label = "tv")
+
+enum class CategoryType(val title: String,val label: String)  {
+    Movies(title = "MOVIE",label = "movie"),
+    TVs(title = "TV",label = "tv")
 }
 
 val MoviesCategories = listOf(

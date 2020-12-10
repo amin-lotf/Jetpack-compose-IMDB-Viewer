@@ -1,5 +1,6 @@
 package com.example.imdbviewer.util
 
+import com.example.imdbviewer.data.cache.CategoryType
 import com.example.imdbviewer.models.tmdb.item.TmdbItemDetails
 import com.example.imdbviewer.models.tmdb.item.TmdbListItem
 import com.example.imdbviewer.models.tmdb.item.movie.TmdbMovieDetails
@@ -7,7 +8,7 @@ import com.example.imdbviewer.models.tmdb.item.movie.TmdbMovieListItem
 import com.example.imdbviewer.models.tmdb.item.tv.TmdbTVDetails
 import com.example.imdbviewer.models.tmdb.item.tv.TmdbTVListItem
 
-fun <T> mapToItemDetails(item:T): TmdbItemDetails {
+fun <T> mapToItemDetails(item:T,type:CategoryType): TmdbItemDetails {
     try {
         return when (item) {
             is TmdbMovieDetails -> {
@@ -20,11 +21,14 @@ fun <T> mapToItemDetails(item:T): TmdbItemDetails {
                     genres = item.genres?: emptyList(),
                     director = director?: emptyList(),
                     cast = item.credits?.cast?.sortedBy { it.order }?: emptyList(),
+                    posterPath = item.poster_path?:"",
                     backdropPath = item.backdrop_path?:"",
                     releaseYear = mapToYear(item.release_date),
                     duration = item.runtime?:0,
                     voteAverage = item.vote_average?:0.0,
-                    voteCount = item.vote_count?:0
+                    voteCount = item.vote_count?:0,
+                    isFavorite = item.isFavorite,
+                    category = type.label
                 )
             }
 
@@ -36,11 +40,14 @@ fun <T> mapToItemDetails(item:T): TmdbItemDetails {
                     genres = item.genres?: emptyList(),
                     director = item.created_by?.map { it.name }?: emptyList(),
                     cast = item.credits?.cast?.sortedBy { it.order }?: emptyList(),
+                    posterPath = item.poster_path?:"",
                     backdropPath = item.backdrop_path?:"",
                     releaseYear = mapToYear(item.first_air_date),
                     duration = 0,
                     voteAverage = item.vote_average?:0.0,
-                    voteCount = item.vote_count?:0
+                    voteCount = item.vote_count?:0,
+                    isFavorite = item.isFavorite,
+                    category = type.label
                 )
             }
 
@@ -52,28 +59,28 @@ fun <T> mapToItemDetails(item:T): TmdbItemDetails {
 }
 
 
-fun <T> mapToListItem(item:T):TmdbListItem{
+fun <T> mapToListItem(item:T,type:CategoryType):TmdbListItem{
     try {
 
         return when(item){
             is TmdbMovieListItem->{
                 TmdbListItem(
                     id=item.id,
-                    originalTitle = item.originalTitle?:"",
                     posterPath = item.posterPath?:"",
                     title = item.title?:"",
                     voteAverage = item.voteAverage?:0.0,
-                    year = mapToYear(item.year)
+                    year = mapToYear(item.year),
+                    category = type.label
                 )
             }
             is TmdbTVListItem->{
                 TmdbListItem(
                     id=item.id,
-                    originalTitle = item.originalTitle?:"",
                     posterPath = item.posterPath?:"",
                     title = item.title?:"",
                     voteAverage = item.voteAverage?:0.0,
-                    year = mapToYear(item.year)
+                    year = mapToYear(item.year),
+                    category = type.label
                 )
             }
             else -> throw IllegalArgumentException("Invalid cast")

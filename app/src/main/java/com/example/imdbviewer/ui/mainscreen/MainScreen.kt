@@ -1,7 +1,6 @@
 package com.example.imdbviewer.ui.mainscreen
 
 
-import android.util.Log
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.ScrollableColumn
 import androidx.compose.foundation.clickable
@@ -9,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,9 +16,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.ExperimentalFocus
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.AmbientDensity
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.paging.PagingData
@@ -38,8 +41,7 @@ import dev.chrisbanes.accompanist.coil.CoilImage
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 
-val TAG = "aminjoon"
-
+private val TAG = "aminjoon"
 
 
 @FlowPreview
@@ -48,12 +50,20 @@ val TAG = "aminjoon"
 @Composable
 fun MainScreen(
     viewModel: MainViewModel,
-    mainScreenInteractionEvents: (MainScreenInteractionEvents) -> Unit
+    screenNavigationEvents: (ScreenNavigationEvents) -> Unit
 ) {
     val scaffoldState = rememberScaffoldState()
-    val viewState by viewModel.mainScreenState.collectAsState(initial = MainScreenViewState())
+
+    val viewState by viewModel.mainScreenState.collectAsState()
     Scaffold(
         scaffoldState = scaffoldState,
+        drawerContent = {
+
+            DrawerContent(
+                navigationEvent = screenNavigationEvents,
+                scaffoldState=scaffoldState
+            )
+                        },
         topBar = {
             TopAppBar(
                 title = {
@@ -70,7 +80,7 @@ fun MainScreen(
                 navigationIcon =
                 if (!viewState.inSearchMode) {
                     {
-                        IconButton(onClick = {}) {
+                        IconButton(onClick = {scaffoldState.drawerState.open()}) {
                             Icon(Icons.Default.Menu)
                         }
                     }
@@ -89,7 +99,7 @@ fun MainScreen(
             MainContent(
                 viewState = viewState,
                 modifier = Modifier.padding(vertical = 16.dp, horizontal = 8.dp),
-                mainScreenInteractionEvents = mainScreenInteractionEvents,
+                navigationEvents = screenNavigationEvents,
                 onCategorySelected = viewModel::changeCategory
             )
         }
@@ -99,7 +109,7 @@ fun MainScreen(
 @Composable
 fun MainContent(
     viewState: MainScreenViewState,
-    mainScreenInteractionEvents: (MainScreenInteractionEvents) -> Unit,
+    navigationEvents: (ScreenNavigationEvents) -> Unit,
     onCategorySelected: (Category) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -108,7 +118,7 @@ fun MainContent(
             viewState = viewState.moviesViewState,
             type = CategoryType.Movies,
             inSearchMode = viewState.inSearchMode,
-            mainScreenInteractionEvents = mainScreenInteractionEvents,
+            mainScreenInteractionEvents = navigationEvents,
             onCategorySelected = onCategorySelected
         )
         Spacer(Modifier.preferredHeight(8.dp))
@@ -116,10 +126,50 @@ fun MainContent(
             viewState = viewState.tvsViewState,
             type = CategoryType.TVs,
             inSearchMode = viewState.inSearchMode,
-            mainScreenInteractionEvents = mainScreenInteractionEvents,
+            mainScreenInteractionEvents = navigationEvents,
             onCategorySelected = onCategorySelected
         )
         Spacer(Modifier.preferredHeight(8.dp))
+    }
+}
+
+
+@Composable
+fun DrawerContent(
+    modifier: Modifier = Modifier,
+    navigationEvent: (ScreenNavigationEvents) -> Unit,
+    scaffoldState: ScaffoldState
+) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.SpaceBetween) {
+
+        Button(
+            onClick = {
+                scaffoldState.drawerState.close(onClosed = {
+                                    navigationEvent(
+                    ScreenNavigationEvents.NavigateToFavorites
+                )
+                })
+            },
+            elevation = null,
+            colors = ButtonConstants.defaultButtonColors(
+                backgroundColor = Color.Transparent
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp, horizontal = 8.dp),
+
+            ) {
+            Icon(Icons.Default.Favorite, modifier = Modifier.preferredSize(20.dp))
+            Spacer(modifier = Modifier.preferredWidth(8.dp))
+            Text(
+                text = "Favorites",
+                style = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Bold),
+                textAlign = TextAlign.Start,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+
     }
 }
 
@@ -130,10 +180,10 @@ fun CategorySection(
     type: CategoryType,
     inSearchMode: Boolean,
     modifier: Modifier = Modifier,
-    mainScreenInteractionEvents: (MainScreenInteractionEvents) -> Unit,
+    mainScreenInteractionEvents: (ScreenNavigationEvents) -> Unit,
     onCategorySelected: (Category) -> Unit,
 ) {
-    val ( isEmpty,setCheck)= remember { mutableStateOf(true) }
+    val (isEmpty, setCheck) = remember { mutableStateOf(true) }
     Column(modifier = modifier) {
 
         if (!inSearchMode || !isEmpty) {
@@ -145,7 +195,7 @@ fun CategorySection(
             )
         }
         val selectedCategory = viewState.selectedCategory
-       
+
         if (selectedCategory != null) {
             if (inSearchMode) {
                 TmdbRowPagination(
@@ -154,9 +204,8 @@ fun CategorySection(
                     checkIfEmptyList = setCheck,
                     onItemClick = { tmdbItemList ->
                         mainScreenInteractionEvents(
-                            MainScreenInteractionEvents.OpenItemDetails(
-                                item = tmdbItemList,
-                                type = type
+                            ScreenNavigationEvents.NavigateToItemDetails(
+                                item = tmdbItemList
                             )
                         )
                     }
@@ -176,9 +225,8 @@ fun CategorySection(
                         ),
                         onItemClick = { tmdbItemList ->
                             mainScreenInteractionEvents(
-                                MainScreenInteractionEvents.OpenItemDetails(
-                                    item = tmdbItemList,
-                                    type = type
+                                ScreenNavigationEvents.NavigateToItemDetails(
+                                    item = tmdbItemList
                                 )
                             )
                         }
@@ -235,7 +283,7 @@ fun TmdbRowPagination(
     flow: Flow<PagingData<TmdbListItem>>,
     modifier: Modifier = Modifier,
     handleLoadState: Boolean = true,
-    checkIfEmptyList:(Boolean)->Unit,
+    checkIfEmptyList: (Boolean) -> Unit,
     onItemClick: (TmdbListItem) -> Unit
 ) = RowLayoutPagination(
     flow = flow,

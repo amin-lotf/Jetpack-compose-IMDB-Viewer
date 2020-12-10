@@ -71,5 +71,7 @@ data class TmdbMovieDetails (
 	@Expose
 	@SerializedName("vote_count") val vote_count : Int?,
 	@Expose
-	@SerializedName("credits") val credits : Credits?
+	@SerializedName("credits") val credits : Credits?,
+
+	val isFavorite: Boolean
 )

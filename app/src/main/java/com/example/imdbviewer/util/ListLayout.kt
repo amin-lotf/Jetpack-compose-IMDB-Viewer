@@ -24,7 +24,11 @@ import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 
 
 val TAG = "aminjoon"
@@ -38,8 +42,10 @@ fun <T : Any> RowLayoutPagination(
     content: @Composable (T) -> Unit
 ) {
     val items = flow.collectAsLazyPagingItems()
+    val state= rememberLazyListState()
 
         LazyRow(
+            state = state,
             modifier = if (handleLoadStates) { modifier.preferredHeight(250.dp)} else modifier
         ) {
             items(items) { item ->
@@ -59,6 +65,8 @@ fun <T : Any> RowLayoutPagination(
             }
 
         }
+
+
 }
 
 @Composable

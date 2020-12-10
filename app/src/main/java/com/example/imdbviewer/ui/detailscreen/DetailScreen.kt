@@ -1,68 +1,118 @@
 package com.example.imdbviewer.ui.detailscreen
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.ScrollableColumn
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRowFor
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Providers
-import androidx.compose.runtime.collectAsState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Done
+import androidx.compose.material.icons.outlined.Favorite
+import androidx.compose.material.icons.sharp.Favorite
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.imdbviewer.models.tmdb.genres.Genre
 import com.example.imdbviewer.models.tmdb.people.Cast
 import com.example.imdbviewer.util.RowLayout
 import dev.chrisbanes.accompanist.coil.CoilImage
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import androidx.compose.runtime.getValue
 import com.example.imdbviewer.models.tmdb.item.TmdbItemDetails
 import com.example.imdbviewer.util.ImageConfig
 
+private val imageHeight = 300.dp
+private val metadataHeight = 50.dp
+private val metadataOffset = imageHeight - metadataHeight
+
 @ExperimentalCoroutinesApi
 @Composable
-fun DetailScreen(
+fun DetailsScreen(
     viewModel: DetailViewModel,
-    // navController: NavController,
+    navController: NavController,
     modifier: Modifier = Modifier
 ) {
     val viewState by viewModel.state.collectAsState()
-    val tmdbItem=viewState.itemDetails
-    if (tmdbItem!=null){
-        ScrollableColumn(modifier = modifier) {
-            Box(modifier = Modifier.preferredHeight(200.dp).fillMaxWidth()) {
-                CoilImage(
-                    data = ImageConfig.backdropPath + tmdbItem.backdropPath,
-                    fadeIn = true,
-                    contentScale = ContentScale.FillBounds,
-                )
-                Surface(
-                    color = MaterialTheme.colors.surface.copy(alpha = 0.4f),
-                    modifier = Modifier.align(Alignment.BottomStart)
-                        .fillMaxWidth()
-                ) {
-                    ShowMetadata(tmdbItem = tmdbItem)
-                }
-            }
+
+    val tmdbItem = viewState.itemDetails
+    Box(modifier = modifier.fillMaxSize()) {
+        val scroll = rememberScrollState(0f)
+        tmdbItem?.let {
+            Header(imagePath = tmdbItem.backdropPath)
+            Up(upPress = { navController.popBackStack() })
+            TmdbMetadata(tmdbItem = tmdbItem, saveItem = viewModel::updateFavoriteState)
+            DetailsContent(tmdbItem = tmdbItem, scrollState = scroll)
+        }
+
+    }
+
+
+}
+
+
+@Composable
+fun Header(imagePath: String?, modifier: Modifier = Modifier) {
+    val imageUrl = imagePath?.let { ImageConfig.backdropPath + it }
+        ?: "https://critics.io/img/movies/poster-placeholder.png"
+    CoilImage(
+        data = imageUrl,
+        fadeIn = true,
+        contentScale = ContentScale.FillHeight,
+        modifier = modifier.preferredHeight(imageHeight)
+    )
+
+}
+
+@Composable
+private fun Up(upPress: () -> Unit) {
+    IconButton(
+        onClick = upPress,
+        modifier = Modifier
+            .padding(horizontal = 16.dp, vertical = 10.dp)
+            .preferredSize(36.dp)
+            .background(
+                color = MaterialTheme.colors.surface.copy(alpha = 0.32f),
+                shape = CircleShape
+            )
+    ) {
+        Icon(
+            Icons.Outlined.ArrowBack,
+        )
+    }
+}
+
+@ExperimentalCoroutinesApi
+@Composable
+fun DetailsContent(
+    tmdbItem: TmdbItemDetails,
+    scrollState: ScrollState,
+    modifier: Modifier = Modifier
+) {
+
+    Column {
+        Spacer(modifier = Modifier.preferredHeight(imageHeight).fillMaxWidth())
+        ScrollableColumn(modifier = modifier, scrollState = scrollState) {
             ShowDescription(tmdbItem = tmdbItem)
             Spacer(modifier = Modifier.preferredHeight(16.dp))
             ShowCredits(tmdbItem = tmdbItem)
 
         }
     }
-    else{
-        Box(modifier = Modifier.fillMaxSize()) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-        }
-    }
-
-
+//    else{
+//        Box(modifier = Modifier.fillMaxSize()) {
+//            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+//        }
+//    }
 }
 
 
@@ -158,7 +208,7 @@ fun PersonItem(person: Cast, modifier: Modifier = Modifier) {
                     .clip(RoundedCornerShape(8.dp))
             )
             Text(
-                text = person.name?:"",
+                text = person.name ?: "",
                 style = MaterialTheme.typography.subtitle2,
                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
                 maxLines = 2,
@@ -166,7 +216,7 @@ fun PersonItem(person: Cast, modifier: Modifier = Modifier) {
             )
             Providers(AmbientContentAlpha provides ContentAlpha.medium) {
                 Text(
-                    text = person.character?:"",
+                    text = person.character ?: "",
                     style = MaterialTheme.typography.subtitle2,
                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
                     maxLines = 2,
@@ -179,20 +229,54 @@ fun PersonItem(person: Cast, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun ShowMetadata(tmdbItem: TmdbItemDetails, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-        Text(
-            text = tmdbItem.title,
-            style = MaterialTheme.typography.h6,
-            color = MaterialTheme.colors.onSurface
+fun TmdbMetadata(
+    tmdbItem: TmdbItemDetails,
+    saveItem: (TmdbItemDetails, Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column {
+        Spacer(
+            modifier = Modifier
+                .fillMaxWidth()
+                .preferredHeight(metadataOffset)
         )
+        Surface(
+            color = MaterialTheme.colors.surface.copy(alpha = 0.4f),
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            Row(
+                modifier = modifier.preferredHeight(metadataHeight)
+                    .padding(vertical = 8.dp)
+                    .padding(start = 16.dp, end = 8.dp)
+            ) {
+                Text(
+                    text = tmdbItem.title,
+                    style = MaterialTheme.typography.h6,
+                    color = MaterialTheme.colors.onSurface,
+                    modifier = Modifier.weight(1f).align(Alignment.CenterVertically)
+                )
+
+                IconButton(
+                    onClick = {
+                        saveItem(tmdbItem, !tmdbItem.isFavorite)
+                    },
+                    modifier = Modifier.preferredSize(36.dp).align(Alignment.CenterVertically)
+                ) {
+                    Surface(
+                        color = Color.Transparent,
+                        contentColor = if (tmdbItem.isFavorite) Color.Red else MaterialTheme.colors.onSurface) {
+                            Icon(Icons.Sharp.Favorite.copy())
+                        }
+                }
 //        Providers(AmbientContentAlpha provides ContentAlpha.medium) {
 //            Text(
 //                "TG-130 | 1h 30min",
 //                style = MaterialTheme.typography.subtitle2
 //            )
 //        }
-
+            }
+        }
     }
 }
 
