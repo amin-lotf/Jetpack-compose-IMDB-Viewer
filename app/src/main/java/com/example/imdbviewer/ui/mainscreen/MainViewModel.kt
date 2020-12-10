@@ -1,15 +1,16 @@
 package com.example.imdbviewer.ui.mainscreen
 
 import android.util.Log
-import androidx.compose.ui.viewinterop.viewModel
 import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.imdbviewer.data.Repository
 import com.example.imdbviewer.data.cache.CategoryType
 import com.example.imdbviewer.data.cache.Category
+import com.example.imdbviewer.firebase.FirebaseUtil
+import com.firebase.ui.auth.ErrorCodes
+import com.firebase.ui.auth.FirebaseUiException
 import kotlinx.coroutines.*
-import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.flow.*
 
 @FlowPreview
@@ -23,6 +24,9 @@ class MainViewModel @ViewModelInject constructor(
     private var _lastSelectedMovieCategory:Category=Category.NowPlayingMovies
     private var _lastSelectedTvCategory:Category=Category.AiringTodayTVs
 
+
+
+    private val _userSignedIn= MutableStateFlow(FirebaseUtil.isUserSignedIn)
 
     private val _selectedMovieCategory: MutableStateFlow<Category> =
         MutableStateFlow(_lastSelectedMovieCategory)
@@ -113,6 +117,7 @@ class MainViewModel @ViewModelInject constructor(
             getSubCategories(categoryType),
             getSelectedCategory(categoryType)
         ) { subCategories, selectedCategory ->
+
             CategoryViewState(
                 subCategories = subCategories,
                 pagingData = repository.getTMDbItemsByCategory(selectedCategory),
@@ -122,6 +127,23 @@ class MainViewModel @ViewModelInject constructor(
             //TODO : handle error
             throw throwable
         }
+
+//    private fun getSectionsViewState(categoryType: CategoryType) =
+//        combine(
+//            getSelectedCategory(CategoryType.TVs),
+//            getSelectedCategory(CategoryType.Movies)
+//        ) { selectedTVCategory, selectedMovieCategory ->
+//
+//            val movieViewState=CategoryViewState(
+//                subCategories = getSubCategories(CategoryType.Movies),
+//                pagingData = repository.getTMDbItemsByCategory(selectedCategory),
+//                selectedCategory = selectedCategory
+//            )
+//        }.catch { throwable ->
+//            //TODO : handle error
+//            throw throwable
+//        }
+
 
 
     fun changeCategory(category: Category) {
@@ -134,6 +156,22 @@ class MainViewModel @ViewModelInject constructor(
                 _selectedTvCategory.value = category
             }
         }
+    }
+
+    fun handleFirebaseError(error: FirebaseUiException?) {
+        when(error?.errorCode) {
+            ErrorCodes.NO_NETWORK -> {
+                Log.d(TAG, "handleFirebaseError: net ${error.message}")
+            }
+            ErrorCodes.UNKNOWN_ERROR -> {
+                Log.d(TAG, "handleFirebaseError unk: ${error.message}")
+            }
+            else->{Log.d(TAG, "handleFirebaseError else: ${error?.message}")}
+        }
+    }
+
+    fun updateUserStatus(){
+        _userSignedIn.value=FirebaseUtil.isUserSignedIn
     }
 
 

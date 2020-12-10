@@ -7,5 +7,6 @@ sealed class ScreenNavigationEvents {
     data class NavigateToItemDetails(val item: TmdbListItem):ScreenNavigationEvents()
     object NavigateToFavorites:ScreenNavigationEvents()
     object NavigateBack:ScreenNavigationEvents()
+    object NavigateToSignInActivity:ScreenNavigationEvents()
 
 }

@@ -1,9 +1,11 @@
 package com.example.imdbviewer.di
 
 import android.content.Context
+import com.example.imdbviewer.R
 import com.example.imdbviewer.data.cache.*
 import com.example.imdbviewer.data.network.tmdb.api.TmdbApi
 import com.example.imdbviewer.data.network.tmdb.api.TmdbApi.Companion.BASE_URL
+import com.firebase.ui.auth.AuthUI
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -30,10 +32,9 @@ object AppModule {
         MovieRoomDatabase.getDatabase(context)
 
 
-
     @Singleton
     @Provides
-    fun provideTmdbDao(movieRoomDatabase: MovieRoomDatabase)=
+    fun provideTmdbDao(movieRoomDatabase: MovieRoomDatabase) =
         movieRoomDatabase.tmdbDao()
 
     @Singleton
@@ -46,20 +47,20 @@ object AppModule {
 
     @Singleton
     @Provides
-    fun provideOkhttpClient(@ApplicationContext context: Context):OkHttpClient{
-        val cacheSize=10*1024*1024
-        val cache=Cache(context.cacheDir,cacheSize.toLong())
+    fun provideOkhttpClient(@ApplicationContext context: Context): OkHttpClient {
+        val cacheSize = 10 * 1024 * 1024
+        val cache = Cache(context.cacheDir, cacheSize.toLong())
 
         return OkHttpClient.Builder()
             .cache(cache)
-            .connectTimeout(100,TimeUnit.SECONDS)
-            .readTimeout(100,TimeUnit.SECONDS)
+            .connectTimeout(100, TimeUnit.SECONDS)
+            .readTimeout(100, TimeUnit.SECONDS)
             .build()
     }
 
     @Singleton
     @Provides
-    fun provideRetrofit(gsonBuilder: Gson,client: OkHttpClient): Retrofit =
+    fun provideRetrofit(gsonBuilder: Gson, client: OkHttpClient): Retrofit =
         Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(client)
