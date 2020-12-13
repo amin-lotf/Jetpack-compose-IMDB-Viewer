@@ -1,15 +1,17 @@
 package com.example.imdbviewer.ui.mainscreen
 
 
+import android.net.Uri
+import android.util.Log
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.ScrollableColumn
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 
@@ -18,27 +20,27 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.ExperimentalFocus
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.AmbientDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.paging.PagingData
 
 
 import com.example.imdbviewer.data.cache.CategoryType
 import com.example.imdbviewer.data.cache.Category
+import com.example.imdbviewer.firebase.FirebaseStorageUtil
+import com.example.imdbviewer.firebase.FirestoreUtil
 import com.example.imdbviewer.models.tmdb.item.TmdbListItem
 import com.example.imdbviewer.theme.keyline1
-import com.example.imdbviewer.util.ImageConfig
-import com.example.imdbviewer.util.ItemSwitcher
-import com.example.imdbviewer.util.ItemTransitionState
-import com.example.imdbviewer.util.RowLayoutPagination
+import com.example.imdbviewer.util.*
 
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import dev.chrisbanes.accompanist.coil.CoilImage
-import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 
 private val TAG = "aminjoon"
@@ -61,18 +63,22 @@ fun MainScreen(
 
             DrawerContent(
                 navigationEvent = screenNavigationEvents,
-                scaffoldState=scaffoldState
+                scaffoldState = scaffoldState,
+                userState = viewState.userState,
+                onSignOut = viewModel::signOutUser,
+                onUserStateChange = viewModel::onUserStateChange
             )
-                        },
+        },
         topBar = {
             TopAppBar(
                 title = {
                     if (!viewState.inSearchMode) {
                         Text(text = "Movie Info")
                     } else {
-                        SearchInputText(
+                        MainInputText(
                             text = viewState.searchQuery,
-                            onTextChanged = viewModel::performSearch
+                            onTextChanged = viewModel::performSearch,
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
                 },
@@ -80,7 +86,7 @@ fun MainScreen(
                 navigationIcon =
                 if (!viewState.inSearchMode) {
                     {
-                        IconButton(onClick = {scaffoldState.drawerState.open()}) {
+                        IconButton(onClick = { scaffoldState.drawerState.open() }) {
                             Icon(Icons.Default.Menu)
                         }
                     }
@@ -104,7 +110,9 @@ fun MainScreen(
             )
         }
     )
+
 }
+
 
 @Composable
 fun MainContent(
@@ -114,6 +122,7 @@ fun MainContent(
     modifier: Modifier = Modifier
 ) {
     ScrollableColumn(modifier = modifier) {
+
         CategorySection(
             viewState = viewState.moviesViewState,
             type = CategoryType.Movies,
@@ -134,42 +143,218 @@ fun MainContent(
 }
 
 
+@ExperimentalFocus
 @Composable
 fun DrawerContent(
     modifier: Modifier = Modifier,
+    userState: UserState,
+    onSignOut: () -> Unit,
+    onUserStateChange: (UserState) -> Unit,
     navigationEvent: (ScreenNavigationEvents) -> Unit,
     scaffoldState: ScaffoldState
 ) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.SpaceBetween) {
 
-        Button(
-            onClick = {
+    ScrollableColumn(modifier = modifier, verticalArrangement = Arrangement.SpaceBetween) {
+
+        if (!userState.isSignedIn) {
+            DrawerButton(text = "Login", icon = Icons.Default.Login, onclick = {
                 scaffoldState.drawerState.close(onClosed = {
-                                    navigationEvent(
-                    ScreenNavigationEvents.NavigateToFavorites
-                )
+                    navigationEvent(
+                        ScreenNavigationEvents.NavigateToSignInActivity
+                    )
                 })
-            },
-            elevation = null,
-            colors = ButtonConstants.defaultButtonColors(
-                backgroundColor = Color.Transparent
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp, horizontal = 8.dp),
-
-            ) {
-            Icon(Icons.Default.Favorite, modifier = Modifier.preferredSize(20.dp))
-            Spacer(modifier = Modifier.preferredWidth(8.dp))
-            Text(
-                text = "Favorites",
-                style = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Bold),
-                textAlign = TextAlign.Start,
-                modifier = Modifier.fillMaxWidth()
-            )
+            })
+        } else {
+            ProfileSection(
+                userState = userState,
+                onStateChange = onUserStateChange,
+                onSelectPhoto = {navigationEvent(ScreenNavigationEvents.NavigateToChoosePhotoActivity)}
+                )
         }
 
+        DrawerButton(text = "Favorites", icon = Icons.Default.Favorite, onclick = {
+            scaffoldState.drawerState.close(onClosed = {
+                navigationEvent(
+                    ScreenNavigationEvents.NavigateToFavorites
+                )
+            })
+        })
 
+        if (userState.isSignedIn) {
+            DrawerButton(text = "Sign out", icon = Icons.Default.ExitToApp, onclick = {
+                scaffoldState.drawerState.close(onClosed = onSignOut)
+            })
+        }
+
+        onCommit(scaffoldState.drawerState.isOpen) {
+            onUserStateChange(userState.copy(inEditMode = false))
+        }
+
+    }
+
+}
+
+@ExperimentalFocus
+@Composable
+fun ProfileSection(
+    userState: UserState,
+    onStateChange: (UserState) -> Unit,
+    onSelectPhoto: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    userState.user?.let { user ->
+        Surface(
+            elevation = 0.dp,
+            color = MaterialTheme.colors.surface.copy(alpha = .2f),
+            modifier = modifier.fillMaxWidth().padding(bottom = 8.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(
+                    top = 8.dp,
+                    start = 8.dp,
+                    end = 8.dp
+                )
+            ) {
+                Row {
+                    ProfilePhoto(
+                        imagePath = user.profilePicturePath,
+                        inEditMode = userState.inEditMode,
+                        onSelectPhoto = onSelectPhoto
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    if (userState.inEditMode) {
+                        ConfirmRejectButtons(
+                            onConfirm = {
+                                onStateChange(userState.copy(inEditMode = false, shouldSave = true))
+                            }, onReject = {
+                                onStateChange(
+                                    userState.copy(
+                                        inEditMode = false,
+                                        shouldSave = false
+                                    )
+                                )
+                            })
+                    } else {
+                        IconButton(
+                            onClick = {},
+                            modifier = Modifier.align(alignment = Alignment.Top)
+                        ) {
+                            Icon(Icons.Default.WbSunny)
+                        }
+                    }
+
+                }
+                Spacer(modifier = Modifier.preferredHeight(8.dp))
+                if (userState.inEditMode) {
+                    ProfileNameEditor(text = user.name, onTextChange = { newName ->
+                        val tmpUser = user.copy(name = newName)
+                        onStateChange(userState.copy(user = tmpUser))
+                    })
+                } else {
+                    ProfileName(text = user.name, onModeChange = {
+                        onStateChange(userState.copy(inEditMode = true))
+                    })
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ConfirmRejectButtons(
+    modifier: Modifier = Modifier,
+    onConfirm: () -> Unit,
+    onReject: () -> Unit
+) {
+    Row(modifier = modifier) {
+        IconButton(onClick = onReject) {
+            Icon(Icons.Default.Cancel)
+        }
+        IconButton(onClick = onConfirm) {
+            Icon(Icons.Default.Done)
+        }
+    }
+}
+
+@Composable
+fun ProfilePhoto(imagePath: Any?, inEditMode: Boolean,onSelectPhoto:()->Unit, modifier: Modifier = Modifier) {
+    Box(modifier = modifier.preferredSize(80.dp).zIndex(8f).clip(shape = CircleShape)) {
+        Log.d(TAG, "ProfilePhoto: $imagePath")
+        CoilImage(
+            data = imagePath?:"https://firebasestorage.googleapis.com/v0/b/imdb-viewer.appspot.com/o/xLmgBwaq50Wekjs2J2fC9GsvNU43%2FprofilePictures%2F6b89ff71-51a7-4b99-a85f-00dfd17726c4?alt=media&token=c038bd5f-3fcb-4541-bb72-03804239e9e2",
+            fadeIn = true,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.preferredSize(80.dp)
+        )
+
+        if (inEditMode) {
+            IconButton(onClick = onSelectPhoto, modifier = Modifier.align(Alignment.Center)) {
+                Icon(Icons.Default.Camera)
+            }
+        }
+    }
+}
+
+@ExperimentalFocus
+@Composable
+fun ProfileNameEditor(
+    text: String,
+    modifier: Modifier = Modifier,
+    onTextChange: (String) -> Unit
+) {
+    Row(modifier = modifier) {
+        MainInputText(
+            text = text,
+            onTextChanged = onTextChange,
+            onImeAction = {},
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+fun ProfileName(
+    text: String,
+    modifier: Modifier = Modifier,
+    onModeChange: (Boolean) -> Unit
+) {
+    Row(modifier = modifier) {
+        Text(text = text, modifier = Modifier.align(alignment = Alignment.CenterVertically))
+        Spacer(modifier = Modifier.weight(1f))
+        IconButton(
+            onClick = { onModeChange(true) },
+            modifier = Modifier.align(alignment = Alignment.Top)
+        ) {
+            Icon(Icons.Default.Edit, modifier = Modifier.size(20.dp))
+        }
+    }
+}
+
+@Composable
+fun DrawerButton(
+    text: String,
+    icon: ImageVector,
+    onclick: () -> Unit
+) {
+    Button(
+        onClick = onclick,
+        elevation = null,
+        colors = ButtonConstants.defaultButtonColors(
+            backgroundColor = Color.Transparent
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp, horizontal = 8.dp),
+
+        ) {
+        Icon(icon, modifier = Modifier.preferredSize(20.dp))
+        Spacer(modifier = Modifier.preferredWidth(8.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Bold),
+            textAlign = TextAlign.Start,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
@@ -382,6 +567,8 @@ fun TmdbItem(
                 //just a placeholder for demo
                 "https://critics.io/img/movies/poster-placeholder.png"
             }
+
+
             CoilImage(
                 data = imageUrl,
                 fadeIn = true,

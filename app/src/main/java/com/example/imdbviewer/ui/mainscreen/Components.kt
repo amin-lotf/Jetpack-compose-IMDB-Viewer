@@ -34,7 +34,7 @@ import androidx.compose.ui.unit.max
 
 @ExperimentalFocus
 @Composable
-fun SearchInputText(
+fun MainInputText(
     text:String,
     onTextChanged: (String)->Unit,
     modifier: Modifier =Modifier,
@@ -47,6 +47,7 @@ fun SearchInputText(
         backgroundColor = Color.Transparent,
         placeholder = { Text("Search...") },
         maxLines = 1,
+
         keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Go),
         onImeActionPerformed = {action,keyboardController->
             if (action==ImeAction.Go){
@@ -55,7 +56,7 @@ fun SearchInputText(
             }
         },
         textStyle =  MaterialTheme.typography.subtitle2,
-        modifier = modifier.fillMaxWidth().fillMaxHeight().fillMaxHeight(.8f).focusRequester(focusRequester)
+        modifier = modifier.fillMaxHeight(.8f).focusRequester(focusRequester)
     )
     onActive{
         focusRequester.requestFocus()

@@ -9,7 +9,6 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
-import androidx.core.os.bundleOf
 import androidx.fragment.app.viewModels
 import androidx.navigation.findNavController
 import com.example.imdbviewer.data.cache.CategoryType
@@ -17,9 +16,6 @@ import com.example.imdbviewer.theme.IMDBViewerTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
-import com.example.imdbviewer.R
-import com.example.imdbviewer.ui.mainscreen.ScreenNavigationEvents
 
 @ExperimentalCoroutinesApi
 @AndroidEntryPoint

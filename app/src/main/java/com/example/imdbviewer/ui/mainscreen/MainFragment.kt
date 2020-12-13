@@ -19,8 +19,9 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.example.imdbviewer.R
 
-import com.example.imdbviewer.firebase.FirebaseUtil
+import com.example.imdbviewer.firebase.FirebaseAuthUtil
 import com.example.imdbviewer.theme.IMDBViewerTheme
+import com.example.imdbviewer.util.ScreenNavigationEvents
 import com.firebase.ui.auth.IdpResponse
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -33,19 +34,23 @@ import kotlinx.coroutines.FlowPreview
 @AndroidEntryPoint
 class MainFragment:Fragment() {
     private val TAG = "aminjoon"
-
-
-
+    
     private val activityForResult=registerForActivityResult(ActivityResultContracts.StartActivityForResult()){result->
         val response=IdpResponse.fromResultIntent(result.data)
         if (result.resultCode==Activity.RESULT_OK){
-           mainViewModel.updateUserStatus()
+           mainViewModel.handleUserLogin()
         }else if (result.resultCode==Activity.RESULT_CANCELED){
            response?.let { authResponse->
                    mainViewModel.handleFirebaseError(authResponse.error)
            }
         }
     }
+
+    private val startActivityForPhoto=registerForActivityResult(ActivityResultContracts.GetContent()){
+        //TODO BUG seems to be null
+        mainViewModel.bufferPhoto(it)
+    }
+
     private val mainViewModel by viewModels<MainViewModel>()
 
     override fun onCreateView(
@@ -75,11 +80,6 @@ class MainFragment:Fragment() {
             }
 
         }
-        if (FirebaseUtil.isUserSignedIn) {
-            FirebaseUtil.signOut()
-        }else {
-            activityForResult.launch(FirebaseUtil.authIntent)
-        }
         return view
     }
 
@@ -100,7 +100,10 @@ class MainFragment:Fragment() {
                 findNavController().navigate(R.id.action_mainFragment_to_nav_favorites)
             }
             ScreenNavigationEvents.NavigateToSignInActivity->{
-                activityForResult.launch(FirebaseUtil.authIntent)
+                activityForResult.launch(FirebaseAuthUtil.authIntent)
+            }
+            ScreenNavigationEvents.NavigateToChoosePhotoActivity->{
+                startActivityForPhoto.launch("image/*")
             }
         }
     }

@@ -42,10 +42,9 @@ fun <T : Any> RowLayoutPagination(
     content: @Composable (T) -> Unit
 ) {
     val items = flow.collectAsLazyPagingItems()
-    val state= rememberLazyListState()
+
 
         LazyRow(
-            state = state,
             modifier = if (handleLoadStates) { modifier.preferredHeight(250.dp)} else modifier
         ) {
             items(items) { item ->

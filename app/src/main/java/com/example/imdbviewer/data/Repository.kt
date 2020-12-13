@@ -20,12 +20,18 @@ import javax.inject.Singleton
 @Singleton
 class Repository @Inject constructor(
     private val tmdbApi: TmdbApi,
-    private val tmdbDao: TmdbDao
+    private val tmdbDao: TmdbDao,
+    private val mappers: Mappers
 ) {
     val TAG = "aminjoon"
 
     fun getSavedItems()=
         tmdbDao.getFavorites()
+
+
+
+
+
 
     suspend fun updateTmdbFavoriteState(tmdbItemDetails: TmdbItemDetails,isFavorite:Boolean){
         if (isFavorite){

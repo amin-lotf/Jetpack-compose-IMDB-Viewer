@@ -5,11 +5,14 @@ import com.example.imdbviewer.R
 import com.firebase.ui.auth.AuthUI
 import com.google.firebase.auth.FirebaseAuth
 
-object FirebaseUtil {
+object FirebaseAuthUtil {
     private val TAG="aminjoon"
     private val firebaseAuth by lazy {
         FirebaseAuth.getInstance()
     }
+
+    val userId: String
+        get() = firebaseAuth.uid ?: throw NullPointerException("UID not exist")
 
     private val _providers=arrayListOf(
     AuthUI.IdpConfig.EmailBuilder().build(),
@@ -23,8 +26,6 @@ object FirebaseUtil {
         .build()
 
     val isUserSignedIn= firebaseAuth.currentUser!=null
-
-
 
 
     fun signOut(){

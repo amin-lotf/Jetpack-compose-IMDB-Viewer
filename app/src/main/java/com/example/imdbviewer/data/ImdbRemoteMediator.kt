@@ -8,7 +8,7 @@ import androidx.paging.RemoteMediator
 import androidx.room.withTransaction
 import com.example.imdbviewer.data.cache.CategoryType
 import com.example.imdbviewer.data.cache.MovieRoomDatabase
-import com.example.imdbviewer.data.network.rapidapi.api.RapidApi
+
 import com.example.imdbviewer.models.*
 import retrofit2.HttpException
 import java.io.IOException
