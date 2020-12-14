@@ -1,4 +1,4 @@
-package com.example.imdbviewer.firebase.model
+package com.example.imdbviewer.data.network.firebase.model
 
 data class FirebaseUser(
     val name:String,

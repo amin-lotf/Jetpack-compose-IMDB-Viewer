@@ -2,21 +2,21 @@ package com.example.imdbviewer.ui.mainscreen
 
 import android.net.Uri
 import android.util.Log
-import androidx.compose.ui.viewinterop.viewModel
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.imdbviewer.data.Repository
 import com.example.imdbviewer.data.cache.CategoryType
 import com.example.imdbviewer.data.cache.Category
-import com.example.imdbviewer.firebase.FirebaseAuthUtil
-import com.example.imdbviewer.firebase.FirebaseStorageUtil
-import com.example.imdbviewer.firebase.FirestoreUtil
+import com.example.imdbviewer.data.network.firebase.FirebaseAuthUtil
+import com.example.imdbviewer.data.state.DataState
+import com.example.imdbviewer.models.User
 import com.firebase.ui.auth.ErrorCodes
 import com.firebase.ui.auth.FirebaseUiException
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import java.lang.NullPointerException
 
 @FlowPreview
 @ExperimentalCoroutinesApi
@@ -29,8 +29,13 @@ class MainViewModel @ViewModelInject constructor(
     private var _lastSelectedMovieCategory: Category = Category.NowPlayingMovies
     private var _lastSelectedTvCategory: Category = Category.AiringTodayTVs
 
+    private val _userInEdit= mutableStateOf<User?>(null)
 
-    private val _userSate = MutableStateFlow(UserState())
+    val userInEdit: State<User?>
+    get() = _userInEdit
+
+
+    private val _isUserSignedIn = MutableStateFlow(false)
 
     private val _selectedMovieCategory: MutableStateFlow<Category> =
         MutableStateFlow(_lastSelectedMovieCategory)
@@ -49,22 +54,23 @@ class MainViewModel @ViewModelInject constructor(
     val mainScreenState: StateFlow<MainScreenViewState>
         get() = _mainScreenState
 
+    val isUserSignedIn: StateFlow<Boolean>
+        get() = _isUserSignedIn
+
     val inSearchMode: StateFlow<Boolean>
         get() = _inSearchMode
 
     init {
-        getUserInfo()
+        checkUserStatus()
         viewModelScope.launch {
             combine(
                 getSectionViewState(CategoryType.Movies),
                 getSectionViewState(CategoryType.TVs),
-                getSearchSectionViewState(),
-                _userSate
-            ) { movies, tvs, (searchMode, query), userState ->
+                getSearchSectionViewState()
+            ) { movies, tvs, (searchMode, query) ->
                 MainScreenViewState(
                     moviesViewState = movies,
                     tvsViewState = tvs,
-                    userState = userState,
                     inSearchMode = searchMode,
                     searchQuery = query
                 )
@@ -172,84 +178,93 @@ class MainViewModel @ViewModelInject constructor(
 
     fun handleUserLogin() {
         viewModelScope.launch {
-            FirestoreUtil.initCurUserIfFirstTime { throwable ->
-                if (throwable == null) {
-                    getUserInfo()
-                } else {
-                    //TODO handle error
-                    throwable.printStackTrace()
+            repository.handleUserLogin().collect { state ->
+                when (state) {
+                    is DataState.Loading -> {
+                        Log.d(TAG, "handleUserLogin: Loading")
+                    }
+                    is DataState.Success -> {
+                        _isUserSignedIn.value = true
+                    }
+                    is DataState.Failed -> {
+                        Log.d(TAG, "handleUserLogin: Error: ${state.message}")
+                    }
                 }
+
             }
         }
     }
 
-    private fun getUserInfo() {
-        viewModelScope.launch {
-            FirestoreUtil.getCurrentUser { user, throwable ->
-                if (throwable == null) {
-                    user?.let {
-                        _userSate.value = UserState(
-                            isSignedIn = true,
-                            user = it
-                        )
-                    }
-                } else {
-                    _userSate.value = UserState(isSignedIn = false, user = null)
-                    //TODO handle error
-                }
-            }
+    private fun checkUserStatus() {
+        _isUserSignedIn.value = FirebaseAuthUtil.isUserSignedIn
+    }
+
+    fun onEditUserInfo(user: User) {
+        _userInEdit.value=user
+        Log.d(TAG, "onEditUserInfo: $user")
+    }
+
+    fun onEditUserDone(shouldSave:Boolean){
+        if (shouldSave){
+
+        }else{
+            _userInEdit.value=null
         }
     }
+
+    private fun updateUserInfo(user: User){
+
+    }
+
+
+    fun getUserInfo() = repository.getUserInfo().catch {
+        emit(DataState.failed("Error Getting User Info"))
+    }.map { state ->
+        if (state is DataState.Failed) {
+            _isUserSignedIn.value = false
+        }
+        state
+    }
+
 
     fun signOutUser() {
-        _userSate.value = UserState(isSignedIn = false, user = null)
+        _isUserSignedIn.value=false
         FirebaseAuthUtil.signOut()
     }
 
-    fun onUserStateChange(userState: UserState) {
-        when (userState.inEditMode) {
-            true -> {
-                _userSate.value=userState
-            }
-            false -> {
-                if (userState.shouldSave) {
-                    val user = _userSate.value.user
-                    user?.let {
-                        it.profilePicturePath?.let { photoUri ->
-                            FirebaseStorageUtil.uploadProfilePhoto(photoUri as Uri) { downloadLink, throwable ->
-                                if (throwable != null || downloadLink == null) {
-                                    //TODO handle error
-                                    throw throwable
-                                        ?: NullPointerException("Failed to upload photo")
-                                } else {
-                                    updateUserInfo(name = "", imageUri = downloadLink)
-                                }
-                            }
-                        }
-                        updateUserInfo(name = user.name, imageUri = null)
-                    }
-
-                }
-                getUserInfo()
-            }
-        }
+    fun onUserStateChange(userViewState: UserViewState) {
+//        when (userState.inEditMode) {
+//            true -> {
+//                _userSate.value=userState
+//            }
+//            false -> {
+//                if (userState.shouldSave) {
+//                    val user = _userSate.value.user
+//                    user?.let {
+//                        it.profilePicturePath?.let { photoUri ->
+//                            FirebaseStorageUtil.uploadProfilePhoto(photoUri as Uri) { downloadLink, throwable ->
+//                                if (throwable != null || downloadLink == null) {
+//                                    //TODO handle error
+//                                    throw throwable
+//                                        ?: NullPointerException("Failed to upload photo")
+//                                } else {
+//                                    updateUserInfo(name = "", imageUri = downloadLink)
+//                                }
+//                            }
+//                        }
+//                        updateUserInfo(name = user.name, imageUri = null)
+//                    }
+//
+//                }
+//                getUserInfo()
+//            }
+//        }
     }
 
-    private fun updateUserInfo(name:String="",imageUri:Any?=null){
-        viewModelScope.launch {
-            FirestoreUtil.updateCurUser(name = name,profilePicturePath = imageUri){throwable ->
-                throwable?.let {
-                    //Handle Error
-                    throw throwable
-                }
-                //getUserInfo()
-            }
-        }
-    }
 
-    fun bufferPhoto(uri: Uri){
-        val tmpUser=_userSate.value.user?.copy(profilePicturePath = uri)
-        _userSate.value=_userSate.value.copy(user = tmpUser)
+    fun bufferPhoto(uri: Uri) {
+        val tmpUser=_userInEdit.value?.copy(localPicturePath = uri)
+        _userInEdit.value= tmpUser
     }
 }
 

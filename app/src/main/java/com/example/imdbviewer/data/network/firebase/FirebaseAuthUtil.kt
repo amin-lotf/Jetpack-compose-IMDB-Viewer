@@ -1,4 +1,4 @@
-package com.example.imdbviewer.firebase
+package com.example.imdbviewer.data.network.firebase
 
 import android.util.Log
 import com.example.imdbviewer.R

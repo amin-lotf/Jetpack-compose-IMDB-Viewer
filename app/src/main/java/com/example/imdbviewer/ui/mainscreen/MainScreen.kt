@@ -1,7 +1,6 @@
 package com.example.imdbviewer.ui.mainscreen
 
 
-import android.net.Uri
 import android.util.Log
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.ScrollableColumn
@@ -13,6 +12,7 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.State
 import androidx.compose.ui.Alignment
 
 import androidx.compose.ui.Modifier
@@ -33,8 +33,8 @@ import androidx.paging.PagingData
 
 import com.example.imdbviewer.data.cache.CategoryType
 import com.example.imdbviewer.data.cache.Category
-import com.example.imdbviewer.firebase.FirebaseStorageUtil
-import com.example.imdbviewer.firebase.FirestoreUtil
+import com.example.imdbviewer.data.state.DataState
+import com.example.imdbviewer.models.User
 import com.example.imdbviewer.models.tmdb.item.TmdbListItem
 import com.example.imdbviewer.theme.keyline1
 import com.example.imdbviewer.util.*
@@ -57,16 +57,20 @@ fun MainScreen(
     val scaffoldState = rememberScaffoldState()
 
     val viewState by viewModel.mainScreenState.collectAsState()
+    val userStatus by viewModel.isUserSignedIn.collectAsState()
     Scaffold(
         scaffoldState = scaffoldState,
         drawerContent = {
 
             DrawerContent(
+                isUserSignedIn =userStatus,
+                userInEdit = viewModel.userInEdit,
                 navigationEvent = screenNavigationEvents,
                 scaffoldState = scaffoldState,
-                userState = viewState.userState,
+                userInfoFlow = viewModel.getUserInfo(),
                 onSignOut = viewModel::signOutUser,
-                onUserStateChange = viewModel::onUserStateChange
+                onEditUserInfo = viewModel::onEditUserInfo,
+                onEditDone = viewModel::onEditUserDone
             )
         },
         topBar = {
@@ -143,20 +147,24 @@ fun MainContent(
 }
 
 
+@ExperimentalCoroutinesApi
 @ExperimentalFocus
 @Composable
 fun DrawerContent(
+    isUserSignedIn: Boolean,
+    userInfoFlow: Flow<DataState<User>>,
+    userInEdit: State<User?>,
+    onEditUserInfo: (User) -> Unit,
+    onEditDone: (shouldSave: Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    userState: UserState,
     onSignOut: () -> Unit,
-    onUserStateChange: (UserState) -> Unit,
     navigationEvent: (ScreenNavigationEvents) -> Unit,
     scaffoldState: ScaffoldState
-) {
+    ) {
 
     ScrollableColumn(modifier = modifier, verticalArrangement = Arrangement.SpaceBetween) {
 
-        if (!userState.isSignedIn) {
+        if (!isUserSignedIn) {
             DrawerButton(text = "Login", icon = Icons.Default.Login, onclick = {
                 scaffoldState.drawerState.close(onClosed = {
                     navigationEvent(
@@ -166,9 +174,11 @@ fun DrawerContent(
             })
         } else {
             ProfileSection(
-                userState = userState,
-                onStateChange = onUserStateChange,
-                onSelectPhoto = {navigationEvent(ScreenNavigationEvents.NavigateToChoosePhotoActivity)}
+                userInfoFlow = userInfoFlow,
+                userInEdit = userInEdit,
+                onSelectPhoto = {navigationEvent(ScreenNavigationEvents.NavigateToChoosePhotoActivity)},
+                onEditUser = onEditUserInfo,
+                onEditUserDone = onEditDone
                 )
         }
 
@@ -180,14 +190,14 @@ fun DrawerContent(
             })
         })
 
-        if (userState.isSignedIn) {
+        if (isUserSignedIn) {
             DrawerButton(text = "Sign out", icon = Icons.Default.ExitToApp, onclick = {
                 scaffoldState.drawerState.close(onClosed = onSignOut)
             })
         }
 
         onCommit(scaffoldState.drawerState.isOpen) {
-            onUserStateChange(userState.copy(inEditMode = false))
+            onEditDone(false)
         }
 
     }
@@ -197,65 +207,106 @@ fun DrawerContent(
 @ExperimentalFocus
 @Composable
 fun ProfileSection(
-    userState: UserState,
-    onStateChange: (UserState) -> Unit,
+    userInfoFlow: Flow<DataState<User>>,
+    userInEdit: State<User?>,
+    onEditUser: (User) -> Unit,
     onSelectPhoto: () -> Unit,
+    onEditUserDone:(shouldSave:Boolean)->Unit,
     modifier: Modifier = Modifier
 ) {
-    userState.user?.let { user ->
+    val userInfoState by userInfoFlow.collectAsState(null)
+    userInfoState?.let { state ->
         Surface(
             elevation = 0.dp,
             color = MaterialTheme.colors.surface.copy(alpha = .2f),
             modifier = modifier.fillMaxWidth().padding(bottom = 8.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(
-                    top = 8.dp,
-                    start = 8.dp,
-                    end = 8.dp
-                )
-            ) {
-                Row {
-                    ProfilePhoto(
-                        imagePath = user.profilePicturePath,
-                        inEditMode = userState.inEditMode,
-                        onSelectPhoto = onSelectPhoto
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
-                    if (userState.inEditMode) {
-                        ConfirmRejectButtons(
-                            onConfirm = {
-                                onStateChange(userState.copy(inEditMode = false, shouldSave = true))
-                            }, onReject = {
-                                onStateChange(
-                                    userState.copy(
-                                        inEditMode = false,
-                                        shouldSave = false
-                                    )
-                                )
-                            })
-                    } else {
-                        IconButton(
-                            onClick = {},
-                            modifier = Modifier.align(alignment = Alignment.Top)
-                        ) {
-                            Icon(Icons.Default.WbSunny)
-                        }
+            when(state){
+                is DataState.Loading -> {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                     }
-
                 }
-                Spacer(modifier = Modifier.preferredHeight(8.dp))
-                if (userState.inEditMode) {
-                    ProfileNameEditor(text = user.name, onTextChange = { newName ->
-                        val tmpUser = user.copy(name = newName)
-                        onStateChange(userState.copy(user = tmpUser))
-                    })
-                } else {
-                    ProfileName(text = user.name, onModeChange = {
-                        onStateChange(userState.copy(inEditMode = true))
-                    })
+                is DataState.Success -> {
+                    ProfileInfo(
+                        user = state.data,
+                        userInEditState = userInEdit,
+                        onUserInfoChange = onEditUser,
+                        onSelectPhoto = onSelectPhoto,
+                        onEditDone = onEditUserDone
+                    )
+                }
+                is DataState.Failed -> {
+                    Log.d(TAG, "ProfileSection: Error ${state.message}")
+                    Text(text = "Error: ${state.message}")
                 }
             }
+
+        }
+    }
+}
+
+@ExperimentalFocus
+@Composable
+fun ProfileInfo(
+    user: User,
+    userInEditState: State<User?>,
+    modifier: Modifier=Modifier,
+    onUserInfoChange: (User) -> Unit,
+    onSelectPhoto: () -> Unit,
+    onEditDone:(shouldSave:Boolean)->Unit
+){
+    val userInEdit=userInEditState.value
+    Column(
+        modifier = modifier.padding(
+            top = 8.dp,
+            start = 8.dp,
+            end = 8.dp
+        )
+    ) {
+        val inEditMode=userInEdit!=null
+        Row {
+            if (inEditMode){
+                ProfilePhoto(
+                    imagePath = userInEdit!!.localPicturePath,
+                    inEditMode = inEditMode,
+                    onSelectPhoto = onSelectPhoto
+                )
+            }else{
+                ProfilePhoto(
+                    imagePath = user.profilePicturePath,
+                    inEditMode = false,
+                    onSelectPhoto = onSelectPhoto
+                )
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            if (inEditMode) {
+                ConfirmRejectButtons(
+                    onConfirm = {
+                        onEditDone(true)
+                    }, onReject = {
+                        onEditDone(false)
+                    })
+            } else {
+                IconButton(
+                    onClick = {},
+                    modifier = Modifier.align(alignment = Alignment.Top)
+                ) {
+                    Icon(Icons.Default.WbSunny)
+                }
+            }
+
+        }
+        Spacer(modifier = Modifier.preferredHeight(8.dp))
+        if (inEditMode) {
+            ProfileNameEditor(text = userInEdit!!.name, onTextChange = { newName ->
+                val tmpUser = userInEdit.copy(name = newName)
+                onUserInfoChange(tmpUser)
+            })
+        } else {
+            ProfileName(text = user.name, onModeChange = {
+                onUserInfoChange(user)
+            })
         }
     }
 }

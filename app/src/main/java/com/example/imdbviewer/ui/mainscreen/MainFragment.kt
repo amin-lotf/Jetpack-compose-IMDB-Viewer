@@ -19,7 +19,7 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.example.imdbviewer.R
 
-import com.example.imdbviewer.firebase.FirebaseAuthUtil
+import com.example.imdbviewer.data.network.firebase.FirebaseAuthUtil
 import com.example.imdbviewer.theme.IMDBViewerTheme
 import com.example.imdbviewer.util.ScreenNavigationEvents
 import com.firebase.ui.auth.IdpResponse

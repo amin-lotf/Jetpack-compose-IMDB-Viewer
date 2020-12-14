@@ -1,4 +1,4 @@
-package com.example.imdbviewer.firebase
+package com.example.imdbviewer.data.network.firebase
 
 import android.net.Uri
 import android.util.Log
@@ -10,7 +10,7 @@ import kotlinx.coroutines.tasks.await
 import java.util.*
 
 object FirebaseStorageUtil {
-    private val TAG="aminjoon"
+    private val TAG = "aminjoon"
     private val storageInstance by lazy {
         FirebaseStorage.getInstance()
     }
@@ -27,25 +27,16 @@ object FirebaseStorageUtil {
 
         try {
             ref.putFile(imageUri).await()
-            onComplete(ref.path,null)
-        }catch (t:Throwable){
-            onComplete(null,t)
+            onComplete(ref.path, null)
+        } catch (t: Throwable) {
+            onComplete(null, t)
         }
     }
 
 
-
-    suspend fun getPhotoPath(path:String, onComplete: (imagePath: Uri?, throwable: Throwable?) -> Unit){
-        try {
-
-            val p= storageInstance.getReference(path).downloadUrl.await()
-            Log.d(TAG, "getPhotoPath: $p")
-            //val link= storageInstance.getReferenceFromUrl(path).downloadUrl.await()
-            onComplete(p,null)
-        }catch (t:Throwable){
-            onComplete(null,t)
-        }
-
+    suspend fun getPhotoPath(path: String?):Uri? {
+        if (path == null) return null
+        return storageInstance.getReference(path).downloadUrl.await()
+        //val link= storageInstance.getReferenceFromUrl(path).downloadUrl.await()
     }
-
 }
