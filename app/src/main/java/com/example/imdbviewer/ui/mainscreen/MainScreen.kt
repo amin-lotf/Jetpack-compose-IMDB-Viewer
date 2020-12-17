@@ -4,6 +4,7 @@ package com.example.imdbviewer.ui.mainscreen
 import android.util.Log
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.ScrollableColumn
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -17,7 +18,6 @@ import androidx.compose.ui.Alignment
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.ExperimentalFocus
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -34,8 +34,8 @@ import androidx.paging.PagingData
 import com.example.imdbviewer.data.cache.CategoryType
 import com.example.imdbviewer.data.cache.Category
 import com.example.imdbviewer.data.state.DataState
-import com.example.imdbviewer.models.User
-import com.example.imdbviewer.models.tmdb.item.TmdbListItem
+import com.example.imdbviewer.domain_models.User
+import com.example.imdbviewer.domain_models.TmdbListItem
 import com.example.imdbviewer.theme.keyline1
 import com.example.imdbviewer.util.*
 
@@ -48,7 +48,7 @@ private val TAG = "aminjoon"
 
 @FlowPreview
 @ExperimentalCoroutinesApi
-@ExperimentalFocus
+
 @Composable
 fun MainScreen(
     viewModel: MainViewModel,
@@ -63,7 +63,7 @@ fun MainScreen(
         drawerContent = {
 
             DrawerContent(
-                isUserSignedIn =userStatus,
+                isUserSignedIn = userStatus,
                 userInEdit = viewModel.userInEdit,
                 navigationEvent = screenNavigationEvents,
                 scaffoldState = scaffoldState,
@@ -82,7 +82,8 @@ fun MainScreen(
                         MainInputText(
                             text = viewState.searchQuery,
                             onTextChanged = viewModel::performSearch,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            placeholder = "Search..."
                         )
                     }
                 },
@@ -108,7 +109,7 @@ fun MainScreen(
         bodyContent = {
             MainContent(
                 viewState = viewState,
-                modifier = Modifier.padding(vertical = 16.dp, horizontal = 8.dp),
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
                 navigationEvents = screenNavigationEvents,
                 onCategorySelected = viewModel::changeCategory
             )
@@ -148,7 +149,7 @@ fun MainContent(
 
 
 @ExperimentalCoroutinesApi
-@ExperimentalFocus
+
 @Composable
 fun DrawerContent(
     isUserSignedIn: Boolean,
@@ -160,7 +161,7 @@ fun DrawerContent(
     onSignOut: () -> Unit,
     navigationEvent: (ScreenNavigationEvents) -> Unit,
     scaffoldState: ScaffoldState
-    ) {
+) {
 
     ScrollableColumn(modifier = modifier, verticalArrangement = Arrangement.SpaceBetween) {
 
@@ -176,10 +177,10 @@ fun DrawerContent(
             ProfileSection(
                 userInfoFlow = userInfoFlow,
                 userInEdit = userInEdit,
-                onSelectPhoto = {navigationEvent(ScreenNavigationEvents.NavigateToChoosePhotoActivity)},
+                onSelectPhoto = { navigationEvent(ScreenNavigationEvents.NavigateToChoosePhotoActivity) },
                 onEditUser = onEditUserInfo,
                 onEditUserDone = onEditDone
-                )
+            )
         }
 
         DrawerButton(text = "Favorites", icon = Icons.Default.Favorite, onclick = {
@@ -204,14 +205,14 @@ fun DrawerContent(
 
 }
 
-@ExperimentalFocus
+
 @Composable
 fun ProfileSection(
     userInfoFlow: Flow<DataState<User>>,
     userInEdit: State<User?>,
     onEditUser: (User) -> Unit,
     onSelectPhoto: () -> Unit,
-    onEditUserDone:(shouldSave:Boolean)->Unit,
+    onEditUserDone: (shouldSave: Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val userInfoState by userInfoFlow.collectAsState(null)
@@ -221,7 +222,7 @@ fun ProfileSection(
             color = MaterialTheme.colors.surface.copy(alpha = .2f),
             modifier = modifier.fillMaxWidth().padding(bottom = 8.dp)
         ) {
-            when(state){
+            when (state) {
                 is DataState.Loading -> {
                     Box(modifier = Modifier.fillMaxSize()) {
                         CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -246,17 +247,17 @@ fun ProfileSection(
     }
 }
 
-@ExperimentalFocus
+
 @Composable
 fun ProfileInfo(
     user: User,
     userInEditState: State<User?>,
-    modifier: Modifier=Modifier,
+    modifier: Modifier = Modifier,
     onUserInfoChange: (User) -> Unit,
     onSelectPhoto: () -> Unit,
-    onEditDone:(shouldSave:Boolean)->Unit
-){
-    val userInEdit=userInEditState.value
+    onEditDone: (shouldSave: Boolean) -> Unit
+) {
+    val userInEdit = userInEditState.value
     Column(
         modifier = modifier.padding(
             top = 8.dp,
@@ -264,21 +265,15 @@ fun ProfileInfo(
             end = 8.dp
         )
     ) {
-        val inEditMode=userInEdit!=null
+        val inEditMode = userInEdit != null
+        val photoLink=if(inEditMode) userInEdit!!.pictureUri else user.pictureUri
         Row {
-            if (inEditMode){
-                ProfilePhoto(
-                    imagePath = userInEdit!!.localPicturePath,
-                    inEditMode = inEditMode,
-                    onSelectPhoto = onSelectPhoto
-                )
-            }else{
-                ProfilePhoto(
-                    imagePath = user.profilePicturePath,
-                    inEditMode = false,
-                    onSelectPhoto = onSelectPhoto
-                )
-            }
+            ProfilePhoto(
+                imagePath = photoLink,
+                inEditMode = inEditMode,
+                onSelectPhoto = onSelectPhoto
+            )
+
             Spacer(modifier = Modifier.weight(1f))
             if (inEditMode) {
                 ConfirmRejectButtons(
@@ -305,7 +300,7 @@ fun ProfileInfo(
             })
         } else {
             ProfileName(text = user.name, onModeChange = {
-                onUserInfoChange(user)
+                onUserInfoChange(user.copy(pictureUri = null))
             })
         }
     }
@@ -328,25 +323,31 @@ fun ConfirmRejectButtons(
 }
 
 @Composable
-fun ProfilePhoto(imagePath: Any?, inEditMode: Boolean,onSelectPhoto:()->Unit, modifier: Modifier = Modifier) {
+fun ProfilePhoto(
+    imagePath: Any?,
+    inEditMode: Boolean,
+    onSelectPhoto: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Box(modifier = modifier.preferredSize(80.dp).zIndex(8f).clip(shape = CircleShape)) {
-        Log.d(TAG, "ProfilePhoto: $imagePath")
         CoilImage(
-            data = imagePath?:"https://firebasestorage.googleapis.com/v0/b/imdb-viewer.appspot.com/o/xLmgBwaq50Wekjs2J2fC9GsvNU43%2FprofilePictures%2F6b89ff71-51a7-4b99-a85f-00dfd17726c4?alt=media&token=c038bd5f-3fcb-4541-bb72-03804239e9e2",
+            data = imagePath ?: "",
             fadeIn = true,
             contentScale = ContentScale.Crop,
-            modifier = Modifier.preferredSize(80.dp)
+            modifier = Modifier.preferredSize(80.dp).background(MaterialTheme.colors.onSurface)
         )
 
         if (inEditMode) {
-            IconButton(onClick = onSelectPhoto, modifier = Modifier.align(Alignment.Center)) {
-                Icon(Icons.Default.Camera)
+            Surface(color = Color.Transparent ,contentColor = MaterialTheme.colors.surface,modifier = Modifier.fillMaxSize()) {
+                IconButton(onClick = onSelectPhoto, modifier = Modifier.align(Alignment.Center)) {
+                    Icon(Icons.Default.Camera)
+                }
             }
         }
     }
 }
 
-@ExperimentalFocus
+
 @Composable
 fun ProfileNameEditor(
     text: String,
@@ -358,7 +359,8 @@ fun ProfileNameEditor(
             text = text,
             onTextChanged = onTextChange,
             onImeAction = {},
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = "Name"
         )
     }
 }

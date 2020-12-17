@@ -1,7 +1,7 @@
 package com.example.imdbviewer.data.network.tmdb.api
 
-import com.example.imdbviewer.models.tmdb.item.movie.TmdbMovieDetails
-import com.example.imdbviewer.models.tmdb.item.tv.TmdbTVDetails
+import com.example.imdbviewer.data.network.tmdb.models.item.movie.TmdbMovieDetailsDto
+import com.example.imdbviewer.data.network.tmdb.models.item.tv.TmdbTVDetailsDto
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Path
@@ -46,14 +46,14 @@ interface TmdbApi {
         @Path("movieId") movieId:Int,
         @Query("api_key") apiKey: String,
         @Query("append_to_response") details:String="credits"
-    ):Response<TmdbMovieDetails>
+    ):Response<TmdbMovieDetailsDto>
 
     @GET("tv/{tvId}")
     suspend fun getTVDetails(
         @Path("tvId") tvId:Int,
         @Query("api_key") apiKey: String,
         @Query("append_to_response") details:String="credits"
-    ):Response<TmdbTVDetails>
+    ):Response<TmdbTVDetailsDto>
 
     companion object{
         const val BASE_URL="https://api.themoviedb.org/3/"

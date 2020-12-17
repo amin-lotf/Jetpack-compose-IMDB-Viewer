@@ -11,8 +11,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.Done
-import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.sharp.Favorite
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,11 +22,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.imdbviewer.models.tmdb.people.Cast
+import com.example.imdbviewer.data.network.tmdb.models.people.CastDto
 import com.example.imdbviewer.util.RowLayout
 import dev.chrisbanes.accompanist.coil.CoilImage
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import com.example.imdbviewer.models.tmdb.item.TmdbItemDetails
+import com.example.imdbviewer.domain_models.TmdbItemDetails
 import com.example.imdbviewer.util.ImageConfig
 
 private val imageHeight = 300.dp
@@ -188,7 +186,7 @@ fun ShowCredits(tmdbItem: TmdbItemDetails, modifier: Modifier = Modifier) {
 
 
 @Composable
-fun PersonItem(person: Cast, modifier: Modifier = Modifier) {
+fun PersonItem(person: CastDto, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.clip(shape = RoundedCornerShape(8.dp)),
         elevation = 0.dp

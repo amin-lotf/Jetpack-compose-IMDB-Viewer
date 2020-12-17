@@ -1,11 +1,9 @@
 package com.example.imdbviewer.ui.mainscreen
 
-import android.widget.GridLayout
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ScrollableColumn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
@@ -14,51 +12,69 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.onActive
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.focus
-import androidx.compose.ui.focus.ExperimentalFocus
+
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focusRequester
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.max
+
+@Composable
+fun AppIconButton(
+    icon: ImageVector,
+    modifier: Modifier = Modifier,
+    contentColor: Color = MaterialTheme.colors.onSurface,
+    backgroundColor: Color = Color.Transparent,
+    onClick: () -> Unit,
+) {
+    Surface(contentColor = contentColor) {
+        IconButton(onClick =onClick,modifier = modifier.background(color = backgroundColor)) {
+            Icon(icon)
+        }
+
+    }
+}
 
 
-@ExperimentalFocus
+
 @Composable
 fun MainInputText(
-    text:String,
-    onTextChanged: (String)->Unit,
-    modifier: Modifier =Modifier,
-    onImeAction:()->Unit={}
+    text: String,
+    onTextChanged: (String) -> Unit,
+    placeholder:String,
+    modifier: Modifier = Modifier,
+    onImeAction: () -> Unit = {}
 ) {
-    val focusRequester= remember { FocusRequester() }
+    val focusRequester = remember { FocusRequester() }
+
+
     TextField(
         value = text,
         onValueChange = onTextChanged,
         backgroundColor = Color.Transparent,
-        placeholder = { Text("Search...") },
+        placeholder = { Text(placeholder) },
         maxLines = 1,
 
         keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Go),
-        onImeActionPerformed = {action,keyboardController->
-            if (action==ImeAction.Go){
+        onImeActionPerformed = { action, keyboardController ->
+            if (action == ImeAction.Go) {
                 onImeAction()
                 keyboardController?.hideSoftwareKeyboard()
             }
         },
-        textStyle =  MaterialTheme.typography.subtitle2,
+        textStyle = MaterialTheme.typography.subtitle2,
         modifier = modifier.fillMaxHeight(.8f).focusRequester(focusRequester)
     )
-    onActive{
+    onActive {
         focusRequester.requestFocus()
     }
 }
@@ -66,12 +82,12 @@ fun MainInputText(
 @Composable
 fun SearchButton(
     onClick: (Boolean) -> Unit,
-    inSearchMode:Boolean,
-    modifier: Modifier=Modifier
-)= IconButton(onClick = {onClick(!inSearchMode)}, modifier = modifier) {
-    if(inSearchMode){
+    inSearchMode: Boolean,
+    modifier: Modifier = Modifier
+) = IconButton(onClick = { onClick(!inSearchMode) }, modifier = modifier) {
+    if (inSearchMode) {
         Icon(Icons.Default.Close)
-    }else{
+    } else {
         Icon(Icons.Default.Search)
     }
 }
@@ -79,10 +95,10 @@ fun SearchButton(
 
 @Composable
 fun GridLayout(
-    modifier: Modifier=Modifier,
-    cols:Int=2,
-    content: @Composable ()->Unit
-){
+    modifier: Modifier = Modifier,
+    cols: Int = 2,
+    content: @Composable () -> Unit
+) {
     ScrollableColumn {
         Layout(modifier = modifier, content = content) { measurables, constraints ->
 

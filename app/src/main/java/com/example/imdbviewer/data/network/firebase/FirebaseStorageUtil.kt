@@ -20,21 +20,15 @@ object FirebaseStorageUtil {
 
 
     suspend fun uploadProfilePhoto(
-        imageUri: Uri,
-        onComplete: (imagePath: String?, throwable: Throwable?) -> Unit
-    ) {
+        imageUri: Uri
+    ): String {
         val ref = curUserRef.child("profilePictures/${UUID.randomUUID()}")
-
-        try {
-            ref.putFile(imageUri).await()
-            onComplete(ref.path, null)
-        } catch (t: Throwable) {
-            onComplete(null, t)
-        }
+        ref.putFile(imageUri).await()
+        return ref.path
     }
 
 
-    suspend fun getPhotoPath(path: String?):Uri? {
+    suspend fun getPhotoLink(path: String?):Uri? {
         if (path == null) return null
         return storageInstance.getReference(path).downloadUrl.await()
         //val link= storageInstance.getReferenceFromUrl(path).downloadUrl.await()

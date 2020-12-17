@@ -8,22 +8,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 private val LightColors = lightColors(
-        primary = Red700,
-        primaryVariant = Red900,
-        onPrimary = Color.White,
-        secondary = Red700,
-        secondaryVariant = Red900,
-        onSecondary = Color.White,
-        error = Red800
-)
+    primary = Red700,
+    primaryVariant = Red900,
+    onPrimary = Color.White,
+    secondary = Red700,
+    secondaryVariant = Red900,
+    onSecondary = Color.White,
+    error = Red800,
+    )
 
 private val DarkColors = darkColors(
-        primary = Red300,
-        primaryVariant = Red700,
-        onPrimary = Color.Black,
-        secondary = Red300,
-        onSecondary = Color.White,
-        error = Red200
+    primary = Red300,
+    primaryVariant = Red700,
+    onPrimary = Color.Black,
+    secondary = Red300,
+    onSecondary = Color.White,
+    error = Red200
 )
 
 @Composable
@@ -35,9 +35,9 @@ fun IMDBViewerTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Compos
     }
 
     MaterialTheme(
-            colors = colors,
-            typography = typography,
-            shapes = shapes,
-            content = content
+        colors = colors,
+        typography = typography,
+        shapes = shapes,
+        content = content
     )
 }

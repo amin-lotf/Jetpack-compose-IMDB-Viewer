@@ -1,12 +1,15 @@
 package com.example.imdbviewer.data.network.firebase
 
-import android.net.Uri
 import android.util.Log
+import com.example.imdbviewer.data.cache.models.ListItemEntity
 import com.example.imdbviewer.data.network.firebase.FirebaseAuthUtil.userId
-import com.example.imdbviewer.models.User
-import com.google.firebase.auth.FirebaseAuth
+import com.example.imdbviewer.data.network.firebase.model.FavoriteItemDto
+import com.example.imdbviewer.domain_models.TmdbListItem
+import com.example.imdbviewer.domain_models.User
+import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
 
 object FirestoreUtil {
@@ -18,6 +21,36 @@ object FirestoreUtil {
 
      val curUserDocRef: DocumentReference
         get() = firestore.document("users/$userId")
+
+    private val favoritesCollectionRef:CollectionReference
+    get() = firestore.collection("favorites").document("users").collection(userId)
+
+
+
+    suspend fun insertIntoFavorites(tmdbListItem: FavoriteItemDto){
+        favoritesCollectionRef.document(tmdbListItem.id.toString())
+            .set(
+                tmdbListItem.apply {
+                    timeSynced=System.currentTimeMillis()
+                                   },
+                SetOptions.merge()
+            )
+            .await()
+    }
+
+
+    suspend fun removeFromFavorites(itemId:Int){
+        val documentSnapshot= favoritesCollectionRef.document(itemId.toString()).get().await()
+        if (documentSnapshot.exists()){
+            favoritesCollectionRef.document(itemId.toString()).delete().await()
+        }
+    }
+
+    suspend fun getSyncedFavorites(): List<FavoriteItemDto> {
+        val querySnapshot=favoritesCollectionRef.get().await()
+        return querySnapshot.map { it.toObject(FavoriteItemDto::class.java) }
+    }
+
 
 
     suspend fun initCurUserIfFirstTime() {
@@ -41,32 +74,5 @@ object FirestoreUtil {
 
     }
 
-
-    suspend fun getCurrentUser():User? {
-
-        return curUserDocRef.get().await().toObject(User::class.java)
-    }
-
-
-//    suspend fun getCurrentUser():User? {
-//        try {
-//            val user = curUserDocRef.get().await().toObject(User::class.java)
-//            user?.profilePicturePath?.let {
-//                FirebaseStorageUtil.getPhotoPath(it.toString()) { link, throwable ->
-//                    link?.let {
-//                        Log.d(TAG, "getCurrentUser: $it")
-//                        onComplete(user.copy(profilePicturePath = it), null)
-//
-//                    }
-//                    throwable?.printStackTrace()
-//
-//                }
-//            }
-//
-//
-//        } catch (t: Throwable) {
-//            onComplete(null, t)
-//        }
-//    }
 
 }

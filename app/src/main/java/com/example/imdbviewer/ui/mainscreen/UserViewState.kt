@@ -1,7 +1,7 @@
 package com.example.imdbviewer.ui.mainscreen
 
 import com.example.imdbviewer.data.state.DataState
-import com.example.imdbviewer.models.User
+import com.example.imdbviewer.domain_models.User
 
 
 data class UserViewState(

@@ -4,17 +4,17 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.example.imdbviewer.models.RemoteKey
-import com.example.imdbviewer.models.tmdb.item.TmdbItemDetails
-import com.example.imdbviewer.models.tmdb.item.TmdbListItem
+import com.example.imdbviewer.data.cache.dao.SyncStatDao
+import com.example.imdbviewer.data.cache.dao.TmdbDao
+import com.example.imdbviewer.data.cache.models.ListItemEntity
+import com.example.imdbviewer.data.cache.models.SyncStatEntity
 
 
-@Database(entities = [TmdbListItem::class], version = 8, exportSchema = false)
+@Database(entities = [ListItemEntity::class,SyncStatEntity::class], version = 10, exportSchema = false)
 abstract class MovieRoomDatabase : RoomDatabase() {
-//    abstract fun movieDao():MovieDao
-//    abstract fun tvDao():TVDao
-//    abstract fun remoteKeyDao():RemoteKeyDao
-        abstract fun tmdbDao():TmdbDao
+
+        abstract fun tmdbDao(): TmdbDao
+        abstract fun syncStatDao():SyncStatDao
 
     companion object {
         @Volatile

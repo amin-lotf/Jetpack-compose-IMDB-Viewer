@@ -1,6 +1,6 @@
 package com.example.imdbviewer.util
 
-import com.example.imdbviewer.models.tmdb.item.TmdbListItem
+import com.example.imdbviewer.domain_models.TmdbListItem
 
 sealed class ScreenNavigationEvents {
     data class NavigateToItemDetails(val item: TmdbListItem): ScreenNavigationEvents()

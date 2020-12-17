@@ -1,7 +1,5 @@
 package com.example.imdbviewer.data.network.tmdb.api
 
-import com.example.imdbviewer.models.tmdb.item.TmdbListItem
-
 /*
 Copyright (c) 2020 Kotlin Data Classes Generated from JSON powered by http://www.json2kotlin.com
 

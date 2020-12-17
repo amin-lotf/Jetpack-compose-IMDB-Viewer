@@ -2,7 +2,7 @@ package com.example.imdbviewer.ui.mainscreen
 
 import androidx.paging.PagingData
 import com.example.imdbviewer.data.cache.Category
-import com.example.imdbviewer.models.tmdb.item.TmdbListItem
+import com.example.imdbviewer.domain_models.TmdbListItem
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 

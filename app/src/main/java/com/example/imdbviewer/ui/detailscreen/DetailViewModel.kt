@@ -1,17 +1,17 @@
 package com.example.imdbviewer.ui.detailscreen
 
-import android.util.Log
 import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.imdbviewer.data.Repository
 import com.example.imdbviewer.data.cache.CategoryType
-import com.example.imdbviewer.data.cache.ItemType
-import com.example.imdbviewer.models.tmdb.item.TmdbItemDetails
+import com.example.imdbviewer.domain_models.TmdbItemDetails
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
+@ExperimentalCoroutinesApi
 class DetailViewModel @ViewModelInject constructor(
     private val repository: Repository
 ) : ViewModel() {

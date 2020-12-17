@@ -2,10 +2,8 @@ package com.example.imdbviewer.data.network.tmdb
 
 import android.util.Log
 import androidx.paging.PagingSource
-import com.example.imdbviewer.data.network.tmdb.api.TmdbListResponse
-import com.example.imdbviewer.models.tmdb.item.TmdbListItem
+import com.example.imdbviewer.domain_models.TmdbListItem
 import retrofit2.HttpException
-import retrofit2.Response
 import java.io.IOException
 
 class TMDbPagingSource(

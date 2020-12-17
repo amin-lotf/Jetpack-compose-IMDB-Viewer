@@ -12,7 +12,8 @@ import com.example.imdbviewer.data.cache.CategoryType
 import com.example.imdbviewer.data.cache.Category
 import com.example.imdbviewer.data.network.firebase.FirebaseAuthUtil
 import com.example.imdbviewer.data.state.DataState
-import com.example.imdbviewer.models.User
+import com.example.imdbviewer.domain_models.User
+import com.example.imdbviewer.domain_models.UserPreferences
 import com.firebase.ui.auth.ErrorCodes
 import com.firebase.ui.auth.FirebaseUiException
 import kotlinx.coroutines.*
@@ -50,6 +51,8 @@ class MainViewModel @ViewModelInject constructor(
     private val _tvsSubCategories = MutableStateFlow(repository.getCategories(CategoryType.TVs))
 
     private val _mainScreenState = MutableStateFlow(MainScreenViewState())
+
+    private val _userPreferences= MutableStateFlow(UserPreferences(true))
 
     val mainScreenState: StateFlow<MainScreenViewState>
         get() = _mainScreenState
@@ -206,18 +209,30 @@ class MainViewModel @ViewModelInject constructor(
 
     fun onEditUserDone(shouldSave:Boolean){
         if (shouldSave){
-
+            _userInEdit.value?.let {
+                updateUserInfo(it)
+            }
+            _userInEdit.value=null
         }else{
             _userInEdit.value=null
         }
     }
 
     private fun updateUserInfo(user: User){
-
+        try {
+            viewModelScope.launch {
+                repository.updateUserInfo(user)
+            }
+        }catch (t:Throwable){
+            Log.d(TAG, "updateUserInfo: Error")
+            t.printStackTrace()
+        }
     }
 
 
-    fun getUserInfo() = repository.getUserInfo().catch {
+    fun getUserInfo() = repository.getUserInfo()
+        .catch {
+        Log.d(TAG, "getUserInfo: Error")
         emit(DataState.failed("Error Getting User Info"))
     }.map { state ->
         if (state is DataState.Failed) {
@@ -263,7 +278,7 @@ class MainViewModel @ViewModelInject constructor(
 
 
     fun bufferPhoto(uri: Uri) {
-        val tmpUser=_userInEdit.value?.copy(localPicturePath = uri)
+        val tmpUser=_userInEdit.value?.copy(pictureUri = uri)
         _userInEdit.value= tmpUser
     }
 }

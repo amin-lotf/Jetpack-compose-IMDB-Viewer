@@ -33,11 +33,6 @@ sealed class Category(
 
 }
 
-data class ItemType(
-    val id:Int=0,
-    val type: CategoryType?=null
-)
-
 
 enum class CategoryType(val title: String,val label: String)  {
     Movies(title = "MOVIE",label = "movie"),
