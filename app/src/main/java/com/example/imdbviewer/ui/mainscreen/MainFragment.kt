@@ -57,6 +57,26 @@ class MainFragment : Fragment() {
 
     private val mainViewModel by viewModels<MainViewModel>()
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        activity?.onBackPressedDispatcher?.addCallback(this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    try {
+                        when {
+                            mainViewModel.inSearchMode.value -> mainViewModel.switchToSearchMode(false)
+                            else -> {
+                                isEnabled = false
+                                activity?.onBackPressed()
+                            }
+                        }
+                    } catch (t: Throwable) {
+                        t.printStackTrace()
+                    }
+                }
+            })
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -76,15 +96,7 @@ class MainFragment : Fragment() {
                 }
             }
         }
-        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner,
-            object : OnBackPressedCallback(true) {
-                override fun handleOnBackPressed() {
-                    when {
-                        mainViewModel.inSearchMode.value -> mainViewModel.switchToSearchMode(false)
-                        else -> requireActivity().onBackPressed()
-                    }
-                }
-            })
+
         return view
     }
 

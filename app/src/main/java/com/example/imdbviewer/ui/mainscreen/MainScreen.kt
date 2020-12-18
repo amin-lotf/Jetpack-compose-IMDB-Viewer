@@ -246,8 +246,7 @@ fun ProfileSection(
                     )
                 }
                 is DataState.Failed -> {
-                    Log.d(TAG, "ProfileSection: Error ${state.message}")
-                    Text(text = "Error: ${state.message}")
+                    Text(text = "Error: ${state.message.getContentIfNotHandled()}")
                 }
             }
         }
@@ -394,9 +393,7 @@ fun DrawerButton(
     Button(
         onClick = onclick,
         elevation = null,
-        colors = ButtonConstants.defaultButtonColors(
-            backgroundColor = Color.Transparent
-        ),
+        colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp, horizontal = 8.dp),
@@ -616,7 +613,6 @@ fun TmdbItem(
                 "https://critics.io/img/movies/poster-placeholder.png"
             }
 
-            Log.d(TAG, "TmdbItem: $imageUrl")
             CoilImage(
                 data = imageUrl,
                 fadeIn = true,
