@@ -1,5 +1,7 @@
 package com.example.imdbviewer.util
 
+import androidx.compose.ui.unit.dp
+
 object ImageConfig {
     private const val BASE_URL = "https://image.tmdb.org/t/p/"
     private const val LOGO_SIZE = "w45"
@@ -18,4 +20,10 @@ object ImageConfig {
 
     val logoPath:String
         get() = "$BASE_URL$LOGO_SIZE"
+
+    val posterWidth=150.dp
+    val posterHeight=250.dp
+
+    val personPosterWidth=100.dp
+    val personPosterHeight=220.dp
 }

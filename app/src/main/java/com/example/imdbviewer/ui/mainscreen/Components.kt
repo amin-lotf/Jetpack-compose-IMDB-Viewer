@@ -36,7 +36,7 @@ fun AppIconButton(
     backgroundColor: Color = Color.Transparent,
     onClick: () -> Unit,
 ) {
-    Surface(contentColor = contentColor) {
+    Surface(contentColor = contentColor,color = Color.Transparent) {
         IconButton(onClick =onClick,modifier = modifier.background(color = backgroundColor)) {
             Icon(icon)
         }
@@ -123,15 +123,18 @@ fun GridLayout(
                 placeable
             }
 
-            val width = colMaxWidths.sumBy { it }
+            var width = colMaxWidths.sumBy { it }
                 .coerceIn(constraints.minWidth.rangeTo(constraints.maxWidth))
 
             val height = colHeights.maxOrNull()
                 ?.coerceIn(constraints.minHeight.rangeTo(constraints.maxHeight))
                 ?: constraints.minHeight
 
-            val colX = IntArray(cols) { 0 }
+            val padding=(constraints.maxWidth-width)/2
 
+            width+=padding
+            val colX = IntArray(cols) { 0 }
+            colX[0]=padding
             for (i in 1 until cols) {
                 colX[i] = colX[i - 1] + colMaxWidths[i - 1]
             }

@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.viewModels
@@ -16,6 +17,7 @@ import com.example.imdbviewer.theme.IMDBViewerTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import androidx.fragment.app.Fragment
+import androidx.compose.runtime.getValue
 
 @ExperimentalCoroutinesApi
 @AndroidEntryPoint
@@ -45,10 +47,12 @@ class DetailsFragment : Fragment() {
                 findNavController().popBackStack()
             }else {
                 detailViewModel.prepareDetailScreenViewState(tmdbId = tmdbId, type = categoryType!!)
+
                 setContent {
-                    IMDBViewerTheme(darkTheme = true) {
+                    val userPreferences by detailViewModel.userPreferences.collectAsState()
+                    IMDBViewerTheme(darkTheme = userPreferences.inDarkMode) {
                         Surface(
-                            color = MaterialTheme.colors.background,
+                            color = MaterialTheme.colors.primary,
                             modifier = Modifier.fillMaxSize()
                         ) {
                             DetailsScreen(viewModel = detailViewModel,navController = findNavController())

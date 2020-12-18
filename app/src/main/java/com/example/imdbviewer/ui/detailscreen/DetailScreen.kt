@@ -4,7 +4,7 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.ScrollableColumn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRowFor
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,8 +18,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.WithConstraints
+import androidx.compose.ui.platform.AmbientDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.imdbviewer.data.network.tmdb.models.people.CastDto
@@ -27,11 +30,17 @@ import com.example.imdbviewer.util.RowLayout
 import dev.chrisbanes.accompanist.coil.CoilImage
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import com.example.imdbviewer.domain_models.TmdbItemDetails
+import com.example.imdbviewer.ui.mainscreen.AppIconButton
 import com.example.imdbviewer.util.ImageConfig
+import com.example.imdbviewer.util.ImageConfig.personPosterHeight
+import com.example.imdbviewer.util.ImageConfig.personPosterWidth
 
-private val imageHeight = 300.dp
+
+private const val imageHeight = 1280
 private val metadataHeight = 50.dp
-private val metadataOffset = imageHeight - metadataHeight
+
+//private val metadataOffset = imageHeight - metadataHeight
+private val aspectRation = (1280f / 720).coerceAtLeast(1f)
 
 @ExperimentalCoroutinesApi
 @Composable
@@ -43,50 +52,71 @@ fun DetailsScreen(
     val viewState by viewModel.state.collectAsState()
 
     val tmdbItem = viewState.itemDetails
-    Box(modifier = modifier.fillMaxSize()) {
-        val scroll = rememberScrollState(0f)
-        tmdbItem?.let {
-            Header(imagePath = tmdbItem.backdropPath)
-            Up(upPress = { navController.popBackStack() })
-            TmdbMetadata(tmdbItem = tmdbItem, saveItem = viewModel::updateFavoriteState)
-            DetailsContent(tmdbItem = tmdbItem, scrollState = scroll)
+    WithConstraints {
+
+        val scroll = rememberScrollState(initial = 10f)
+        Box(modifier = modifier.fillMaxSize().padding(vertical = 0.dp)) {
+
+            tmdbItem?.let {
+                DetailsContent(
+                    tmdbItem = tmdbItem,
+                    scrollState = scroll,
+                    containerHeight = maxHeight
+                )
+
+                TopBar(
+                    upPress = { navController.popBackStack() },
+                    tmdbItem = tmdbItem,
+                    saveItem = viewModel::updateFavoriteState,
+                    scrollState = scroll
+                )
+            }
         }
-
     }
-
-
 }
 
 
 @Composable
-fun Header(imagePath: String?, modifier: Modifier = Modifier) {
+fun Header(imagePath: String?, modifier: Modifier = Modifier, scrollState: ScrollState) {
     val imageUrl = imagePath?.let { ImageConfig.backdropPath + it }
         ?: "https://critics.io/img/movies/poster-placeholder.png"
+
+    val offset = scrollState.value / 1.3f
+    val offsetDp = with(AmbientDensity.current) {
+        offset.toDp()
+    }
+    val imageHeightDp = with(AmbientDensity.current) { imageHeight.toDp() }
+
     CoilImage(
         data = imageUrl,
         fadeIn = true,
-        contentScale = ContentScale.FillHeight,
-        modifier = modifier.preferredHeight(imageHeight)
+        contentScale = ContentScale.FillWidth,
+        modifier = modifier.aspectRatio(aspectRation).preferredHeight(imageHeightDp)
+            .padding(top = offsetDp)
     )
 
 }
 
 @Composable
-private fun Up(upPress: () -> Unit) {
-    IconButton(
-        onClick = upPress,
-        modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 10.dp)
-            .preferredSize(36.dp)
-            .background(
-                color = MaterialTheme.colors.surface.copy(alpha = 0.32f),
-                shape = CircleShape
-            )
+private fun TopBar(
+    tmdbItem: TmdbItemDetails,
+    saveItem: (TmdbItemDetails, Boolean) -> Unit,
+    upPress: () -> Unit,
+    modifier: Modifier = Modifier,
+    scrollState: ScrollState
+) {
+    val alpha = (scrollState.value / 500f).coerceAtLeast(.4f).coerceAtMost(1f)
+    Surface(
+        color = MaterialTheme.colors.secondary.copy(alpha = alpha),
+        modifier = modifier
+            .fillMaxWidth()
     ) {
-        Icon(
-            Icons.Outlined.ArrowBack,
-        )
+        Row {
+            AppIconButton(icon = Icons.Outlined.ArrowBack, onClick = upPress)
+            TmdbMetadata(tmdbItem = tmdbItem, saveItem = saveItem)
+        }
     }
+
 }
 
 @ExperimentalCoroutinesApi
@@ -94,17 +124,17 @@ private fun Up(upPress: () -> Unit) {
 fun DetailsContent(
     tmdbItem: TmdbItemDetails,
     scrollState: ScrollState,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    containerHeight: Dp
 ) {
 
-    Column {
-        Spacer(modifier = Modifier.preferredHeight(imageHeight).fillMaxWidth())
-        ScrollableColumn(modifier = modifier, scrollState = scrollState) {
-            ShowDescription(tmdbItem = tmdbItem)
-            Spacer(modifier = Modifier.preferredHeight(16.dp))
-            ShowCredits(tmdbItem = tmdbItem)
+    ScrollableColumn(modifier = modifier.padding(vertical = 0.dp), scrollState = scrollState) {
+        Header(imagePath = tmdbItem.backdropPath, scrollState = scrollState)
+        ShowDescription(tmdbItem = tmdbItem)
+        Spacer(modifier = Modifier.preferredHeight(16.dp))
+        ShowCredits(tmdbItem = tmdbItem)
+        Spacer(Modifier.preferredHeight((containerHeight - 320.dp).coerceAtLeast(0.dp)))
 
-        }
     }
 //    else{
 //        Box(modifier = Modifier.fillMaxSize()) {
@@ -126,23 +156,23 @@ fun ShowDescription(tmdbItem: TmdbItemDetails, modifier: Modifier = Modifier) {
             text =
             "Genres:",
             style = MaterialTheme.typography.subtitle2.copy(fontWeight = FontWeight.Bold),
-            color = MaterialTheme.colors.primary
+            color = MaterialTheme.colors.primaryVariant
         )
-        LazyRowFor(
-            items = tmdbItem.genres,
+        LazyRow(
             contentPadding = PaddingValues(start = 4.dp, end = 4.dp)
-        ) { item ->
-            Surface(
-                color = MaterialTheme.colors.onSurface.copy(alpha = 0.05f),
-                modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
-                shape = MaterialTheme.shapes.small
-            ) {
-                Text(
-                    text = item.name,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                )
+        ) {
+            items(tmdbItem.genres) { item ->
+                Surface(
+                    color = MaterialTheme.colors.surface.copy(alpha = 0.2f),
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(
+                        text = item.name,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
             }
-
         }
     }
 }
@@ -155,7 +185,7 @@ fun ShowCredits(tmdbItem: TmdbItemDetails, modifier: Modifier = Modifier) {
             text =
             "Director:",
             style = MaterialTheme.typography.subtitle2.copy(fontWeight = FontWeight.Bold),
-            color = MaterialTheme.colors.primary
+            color = MaterialTheme.colors.primaryVariant
         )
         Text(
             text = tmdbItem.director.firstOrNull() ?: "",
@@ -172,12 +202,14 @@ fun ShowCredits(tmdbItem: TmdbItemDetails, modifier: Modifier = Modifier) {
 
 
         RowLayout(
-            items = tmdbItem.cast,
-            widthFraction = .3f
+            items = tmdbItem.cast
         ) { person ->
             PersonItem(
                 person = person,
-                modifier = Modifier.padding(2.dp).preferredHeight(220.dp)
+                modifier = Modifier
+                    .padding(2.dp)
+                    .preferredHeight(personPosterHeight)
+                    .preferredWidth(personPosterWidth)
             )
         }
 
@@ -189,7 +221,8 @@ fun ShowCredits(tmdbItem: TmdbItemDetails, modifier: Modifier = Modifier) {
 fun PersonItem(person: CastDto, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.clip(shape = RoundedCornerShape(8.dp)),
-        elevation = 0.dp
+        elevation = 8.dp,
+        backgroundColor = MaterialTheme.colors.secondary
     ) {
         Column {
             val imageUrl = if (!person.profile_path.isNullOrBlank()) {
@@ -201,9 +234,9 @@ fun PersonItem(person: CastDto, modifier: Modifier = Modifier) {
             CoilImage(
                 data = imageUrl,
                 fadeIn = true,
-                contentScale = ContentScale.Fit,
-                modifier = Modifier.preferredWidth(92.dp).preferredHeight(138.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                contentScale = ContentScale.FillBounds,
+                modifier = Modifier.fillMaxWidth().preferredHeight(138.dp)
+
             )
             Text(
                 text = person.name ?: "",
@@ -226,55 +259,41 @@ fun PersonItem(person: CastDto, modifier: Modifier = Modifier) {
     }
 }
 
+
 @Composable
 fun TmdbMetadata(
     tmdbItem: TmdbItemDetails,
     saveItem: (TmdbItemDetails, Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column {
-        Spacer(
-            modifier = Modifier
-                .fillMaxWidth()
-                .preferredHeight(metadataOffset)
+    Row(
+        modifier = Modifier.preferredHeight(metadataHeight)
+            .padding(vertical = 8.dp)
+            .padding(start = 16.dp, end = 8.dp)
+    ) {
+        Text(
+            text = tmdbItem.title,
+            style = MaterialTheme.typography.subtitle1,
+            color = MaterialTheme.colors.onSecondary,
+            modifier = Modifier.weight(1f).align(Alignment.CenterVertically),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
-        Surface(
-            color = MaterialTheme.colors.surface.copy(alpha = 0.4f),
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            Row(
-                modifier = modifier.preferredHeight(metadataHeight)
-                    .padding(vertical = 8.dp)
-                    .padding(start = 16.dp, end = 8.dp)
-            ) {
-                Text(
-                    text = tmdbItem.title,
-                    style = MaterialTheme.typography.h6,
-                    color = MaterialTheme.colors.onSurface,
-                    modifier = Modifier.weight(1f).align(Alignment.CenterVertically)
-                )
 
-                IconButton(
-                    onClick = {
-                        saveItem(tmdbItem, !tmdbItem.isFavorite)
-                    },
-                    modifier = Modifier.preferredSize(36.dp).align(Alignment.CenterVertically)
-                ) {
-                    Surface(
-                        color = Color.Transparent,
-                        contentColor = if (tmdbItem.isFavorite) Color.Red else MaterialTheme.colors.onSurface) {
-                            Icon(Icons.Sharp.Favorite.copy())
-                        }
-                }
-//        Providers(AmbientContentAlpha provides ContentAlpha.medium) {
-//            Text(
-//                "TG-130 | 1h 30min",
-//                style = MaterialTheme.typography.subtitle2
-//            )
-//        }
+        IconButton(
+            onClick = {
+                saveItem(tmdbItem, !tmdbItem.isFavorite)
+            },
+            modifier = Modifier.preferredSize(36.dp).align(Alignment.CenterVertically)
+        ) {
+            Surface(
+                color = Color.Transparent,
+                contentColor = if (tmdbItem.isFavorite) Color.Red else MaterialTheme.colors.onSurface
+            ) {
+                Icon(Icons.Sharp.Favorite.copy())
             }
         }
     }
+
 }
 

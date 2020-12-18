@@ -17,6 +17,34 @@ private val LightColors = lightColors(
     error = Red800,
     )
 
+
+
+private val BlueThemeLight = lightColors(
+    primary = Color.White,
+    primaryVariant = pink600,
+    onPrimary = Color.Black,
+    secondary = blue800,
+    secondaryVariant = blueGray900,
+    error = Red200,
+    onSecondary = Color.White,
+    surface = blue800,
+    onSurface =Color.White,
+)
+
+
+
+private val DarkNew=darkColors(
+    primary = blueGray700,
+    primaryVariant = Red300,
+    onPrimary = Color.White,
+    secondary = blueGray900,
+    error = Red200,
+    onSecondary = Color.White,
+    surface = blueGray900,
+    onSurface =Color.White,
+
+)
+
 private val DarkColors = darkColors(
     primary = Red300,
     primaryVariant = Red700,
@@ -29,9 +57,9 @@ private val DarkColors = darkColors(
 @Composable
 fun IMDBViewerTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable() () -> Unit) {
     val colors = if (darkTheme) {
-        DarkColors
+        DarkNew
     } else {
-        LightColors
+        BlueThemeLight
     }
 
     MaterialTheme(

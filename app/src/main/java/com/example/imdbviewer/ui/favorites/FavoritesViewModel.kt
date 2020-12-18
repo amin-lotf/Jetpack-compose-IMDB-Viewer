@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.imdbviewer.data.Repository
 import com.example.imdbviewer.data.cache.models.SyncStatEntity
 import com.example.imdbviewer.data.state.DataState
+import com.example.imdbviewer.domain_models.UserPreferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -28,7 +29,22 @@ class FavoritesViewModel @ViewModelInject constructor(
     val synStat: StateFlow<DataState<Unit>?>
         get() = _syncStat
 
+    private val _userPreferences= MutableStateFlow(UserPreferences(true))
+
+    val userPreferences:StateFlow<UserPreferences>
+        get() = _userPreferences
+
     init {
+
+        viewModelScope.launch {
+            repository.userPreferencesFlow
+                .catch {
+                    emit(UserPreferences(true))
+                }.collect {
+                    _userPreferences.value=it
+                }
+        }
+
         viewModelScope.launch {
             repository.getSavedItems()
                 .catch {

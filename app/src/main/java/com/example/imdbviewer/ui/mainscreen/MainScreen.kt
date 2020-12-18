@@ -42,6 +42,7 @@ import com.example.imdbviewer.util.*
 import dev.chrisbanes.accompanist.coil.CoilImage
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
+import kotlin.reflect.KFunction1
 
 private val TAG = "aminjoon"
 
@@ -52,6 +53,7 @@ private val TAG = "aminjoon"
 @Composable
 fun MainScreen(
     viewModel: MainViewModel,
+    inDarkMode: Boolean,
     screenNavigationEvents: (ScreenNavigationEvents) -> Unit
 ) {
     val scaffoldState = rememberScaffoldState()
@@ -60,6 +62,7 @@ fun MainScreen(
     val userStatus by viewModel.isUserSignedIn.collectAsState()
     Scaffold(
         scaffoldState = scaffoldState,
+        backgroundColor = MaterialTheme.colors.primary,
         drawerContent = {
 
             DrawerContent(
@@ -87,7 +90,8 @@ fun MainScreen(
                         )
                     }
                 },
-                elevation = 8.dp,
+                elevation = 0.dp,
+                backgroundColor = MaterialTheme.colors.secondary,
                 navigationIcon =
                 if (!viewState.inSearchMode) {
                     {
@@ -103,13 +107,26 @@ fun MainScreen(
                         onClick = viewModel::switchToSearchMode,
                         inSearchMode = viewState.inSearchMode
                     )
+                    if (inDarkMode) {
+                        AppIconButton(
+                            icon = Icons.Default.WbSunny,
+                            onClick = { viewModel.changeDarkMode(!inDarkMode) },
+                            modifier = Modifier.align(alignment = Alignment.Top)
+                        )
+                    } else {
+                        AppIconButton(
+                            icon = Icons.Default.NightShelter,
+                            onClick = { viewModel.changeDarkMode(!inDarkMode) },
+                            modifier = Modifier.align(alignment = Alignment.Top)
+                        )
+                    }
                 }
             )
         },
         bodyContent = {
             MainContent(
                 viewState = viewState,
-                modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
+                modifier = Modifier.padding(horizontal = 2.dp),
                 navigationEvents = screenNavigationEvents,
                 onCategorySelected = viewModel::changeCategory
             )
@@ -127,7 +144,7 @@ fun MainContent(
     modifier: Modifier = Modifier
 ) {
     ScrollableColumn(modifier = modifier) {
-
+        Spacer(Modifier.preferredHeight(8.dp))
         CategorySection(
             viewState = viewState.moviesViewState,
             type = CategoryType.Movies,
@@ -143,7 +160,7 @@ fun MainContent(
             mainScreenInteractionEvents = navigationEvents,
             onCategorySelected = onCategorySelected
         )
-        Spacer(Modifier.preferredHeight(8.dp))
+
     }
 }
 
@@ -160,42 +177,48 @@ fun DrawerContent(
     modifier: Modifier = Modifier,
     onSignOut: () -> Unit,
     navigationEvent: (ScreenNavigationEvents) -> Unit,
-    scaffoldState: ScaffoldState
+    scaffoldState: ScaffoldState,
 ) {
+    Surface(color = MaterialTheme.colors.primary,modifier = modifier.fillMaxHeight()) {
+        ScrollableColumn(
+            verticalArrangement = Arrangement.Top,
+        ) {
 
-    ScrollableColumn(modifier = modifier, verticalArrangement = Arrangement.SpaceBetween) {
+            if (!isUserSignedIn) {
+                DrawerButton(text = "Login", icon = Icons.Default.Login, onclick = {
+                    scaffoldState.drawerState.close(onClosed = {
+                        navigationEvent(
+                            ScreenNavigationEvents.NavigateToSignInActivity
+                        )
+                    })
+                })
+            } else {
+                ProfileSection(
+                    userInfoFlow = userInfoFlow,
+                    userInEdit = userInEdit,
+                    onSelectPhoto = { navigationEvent(ScreenNavigationEvents.NavigateToChoosePhotoActivity) },
+                    onEditUser = onEditUserInfo,
+                    onEditUserDone = onEditDone
+                )
+            }
 
-        if (!isUserSignedIn) {
-            DrawerButton(text = "Login", icon = Icons.Default.Login, onclick = {
+
+            DrawerButton(text = "Favorites", icon = Icons.Default.Favorite, onclick = {
                 scaffoldState.drawerState.close(onClosed = {
                     navigationEvent(
-                        ScreenNavigationEvents.NavigateToSignInActivity
+                        ScreenNavigationEvents.NavigateToFavorites
                     )
                 })
             })
-        } else {
-            ProfileSection(
-                userInfoFlow = userInfoFlow,
-                userInEdit = userInEdit,
-                onSelectPhoto = { navigationEvent(ScreenNavigationEvents.NavigateToChoosePhotoActivity) },
-                onEditUser = onEditUserInfo,
-                onEditUserDone = onEditDone
-            )
+
+            if (isUserSignedIn) {
+                DrawerButton(text = "Sign out", icon = Icons.Default.ExitToApp, onclick = {
+                    scaffoldState.drawerState.close(onClosed = onSignOut)
+                })
+            }
+
         }
 
-        DrawerButton(text = "Favorites", icon = Icons.Default.Favorite, onclick = {
-            scaffoldState.drawerState.close(onClosed = {
-                navigationEvent(
-                    ScreenNavigationEvents.NavigateToFavorites
-                )
-            })
-        })
-
-        if (isUserSignedIn) {
-            DrawerButton(text = "Sign out", icon = Icons.Default.ExitToApp, onclick = {
-                scaffoldState.drawerState.close(onClosed = onSignOut)
-            })
-        }
 
         onCommit(scaffoldState.drawerState.isOpen) {
             onEditDone(false)
@@ -213,13 +236,13 @@ fun ProfileSection(
     onEditUser: (User) -> Unit,
     onSelectPhoto: () -> Unit,
     onEditUserDone: (shouldSave: Boolean) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val userInfoState by userInfoFlow.collectAsState(null)
     userInfoState?.let { state ->
         Surface(
             elevation = 0.dp,
-            color = MaterialTheme.colors.surface.copy(alpha = .2f),
+            color = MaterialTheme.colors.surface,
             modifier = modifier.fillMaxWidth().padding(bottom = 8.dp)
         ) {
             when (state) {
@@ -266,7 +289,7 @@ fun ProfileInfo(
         )
     ) {
         val inEditMode = userInEdit != null
-        val photoLink=if(inEditMode) userInEdit!!.pictureUri else user.pictureUri
+        val photoLink = if (inEditMode) userInEdit!!.pictureUri else user.pictureUri
         Row {
             ProfilePhoto(
                 imagePath = photoLink,
@@ -282,13 +305,6 @@ fun ProfileInfo(
                     }, onReject = {
                         onEditDone(false)
                     })
-            } else {
-                IconButton(
-                    onClick = {},
-                    modifier = Modifier.align(alignment = Alignment.Top)
-                ) {
-                    Icon(Icons.Default.WbSunny)
-                }
             }
 
         }
@@ -338,7 +354,11 @@ fun ProfilePhoto(
         )
 
         if (inEditMode) {
-            Surface(color = Color.Transparent ,contentColor = MaterialTheme.colors.surface,modifier = Modifier.fillMaxSize()) {
+            Surface(
+                color = Color.Transparent,
+                contentColor = MaterialTheme.colors.surface,
+                modifier = Modifier.fillMaxSize()
+            ) {
                 IconButton(onClick = onSelectPhoto, modifier = Modifier.align(Alignment.Center)) {
                     Icon(Icons.Default.Camera)
                 }
@@ -427,7 +447,7 @@ fun CategorySection(
         if (!inSearchMode || !isEmpty) {
             Text(text = type.title)
             Divider(
-                color = MaterialTheme.colors.onSurface,
+                color = MaterialTheme.colors.onPrimary,
                 thickness = 1.dp,
                 modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)
             )
@@ -553,6 +573,7 @@ fun CategoryTabs(
         edgePadding = keyline1,
         indicator = emptyTabIndicator,
         modifier = modifier.fillMaxWidth(),
+        backgroundColor = Color.Transparent
     ) {
         categories.forEachIndexed { index, category ->
             Tab(
@@ -577,13 +598,10 @@ fun CategoryItem(
 ) {
     Surface(
         color = when {
-            selected -> MaterialTheme.colors.primary.copy(alpha = 0.08f)
-            else -> MaterialTheme.colors.onSurface.copy(alpha = 0.12f)
+            selected -> MaterialTheme.colors.secondary.copy(alpha = 0.9f)
+            else -> MaterialTheme.colors.secondaryVariant.copy(alpha = 0.412f)
         },
-        contentColor = when {
-            selected -> MaterialTheme.colors.primary
-            else -> MaterialTheme.colors.onSurface
-        },
+        contentColor = MaterialTheme.colors.onSecondary,
         shape = MaterialTheme.shapes.small,
         modifier = modifier
     ) {
@@ -611,7 +629,8 @@ fun TmdbItem(
 
                     onItemClick(item)
                 }
-            )
+            ),
+        backgroundColor = MaterialTheme.colors.secondary
     ) {
         Column(modifier = Modifier) {
             val imageUrl = if (item.posterPath.isNotBlank()) {
@@ -621,7 +640,7 @@ fun TmdbItem(
                 "https://critics.io/img/movies/poster-placeholder.png"
             }
 
-
+            Log.d(TAG, "TmdbItem: $imageUrl")
             CoilImage(
                 data = imageUrl,
                 fadeIn = true,

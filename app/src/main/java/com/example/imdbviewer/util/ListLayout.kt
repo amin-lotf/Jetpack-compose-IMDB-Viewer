@@ -68,16 +68,17 @@ fun <T : Any> RowLayoutPagination(
 
 }
 
+
+
 @Composable
 fun <T : Any> RowLayout(
     items: List<T>,
     modifier: Modifier = Modifier,
-    widthFraction: Float = 1f / 4f,
-    content: @Composable BoxScope.(T) -> Unit
+    content: @Composable (T) -> Unit
 ) {
     LazyRow(modifier = modifier) {
         items(items) { item ->
-            Box(modifier = Modifier.fillParentMaxWidth(widthFraction)) {
+            Box(modifier = Modifier) {
                 content(item)
             }
         }

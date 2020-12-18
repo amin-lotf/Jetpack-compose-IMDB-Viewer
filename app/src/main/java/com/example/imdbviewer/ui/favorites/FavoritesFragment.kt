@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.os.bundleOf
@@ -18,12 +19,13 @@ import com.example.imdbviewer.theme.IMDBViewerTheme
 import com.example.imdbviewer.util.ScreenNavigationEvents
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import androidx.compose.runtime.getValue
 
 @ExperimentalCoroutinesApi
 @AndroidEntryPoint
 class FavoritesFragment:Fragment() {
 
-    private val viewModel by viewModels<FavoritesViewModel>()
+    private val favoriteViewModel by viewModels<FavoritesViewModel>()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -33,15 +35,12 @@ class FavoritesFragment:Fragment() {
         val view=ComposeView(requireContext())
         view.apply {
             setContent {
-                IMDBViewerTheme(darkTheme = true) {
-                    Surface(
-                        color = MaterialTheme.colors.background,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        FavoriteScreen(viewModel = viewModel){
+                val userPreferences by favoriteViewModel.userPreferences.collectAsState()
+                IMDBViewerTheme(darkTheme = userPreferences.inDarkMode) {
+                        FavoriteScreen(viewModel = favoriteViewModel){
                             handleNavigationEvents(it)
                         }
-                    }
+
                 }
             }
         }

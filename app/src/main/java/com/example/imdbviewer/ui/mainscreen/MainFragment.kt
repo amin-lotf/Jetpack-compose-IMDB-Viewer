@@ -10,6 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 
 import androidx.compose.ui.platform.ComposeView
@@ -26,6 +27,7 @@ import com.firebase.ui.auth.IdpResponse
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import androidx.compose.runtime.getValue
 
 
 
@@ -46,9 +48,11 @@ class MainFragment:Fragment() {
         }
     }
 
-    private val startActivityForPhoto=registerForActivityResult(ActivityResultContracts.GetContent()){
-        //TODO BUG seems to be null
-        mainViewModel.bufferPhoto(it)
+    private val startActivityForPhoto=registerForActivityResult(ActivityResultContracts.GetContent()){uri->
+        uri?.let {
+            mainViewModel.bufferPhoto(it)
+        }
+
     }
 
     private val mainViewModel by viewModels<MainViewModel>()
@@ -61,22 +65,21 @@ class MainFragment:Fragment() {
         val view= ComposeView(requireContext())
         view.apply {
                     setContent {
-            IMDBViewerTheme(darkTheme = true) {
+                        val userPreferences by mainViewModel.userPreferences.collectAsState()
+            IMDBViewerTheme(darkTheme = userPreferences.inDarkMode) {
                 // A surface container using the 'background' color from the theme
 
-                Surface(
-                    color = MaterialTheme.colors.background,
-                    modifier = Modifier.fillMaxHeight()
-                ) {
+
                     Log.d(TAG, "onCreate: main")
                     MainScreen(
-                        mainViewModel
+                        mainViewModel,
+                        inDarkMode = userPreferences.inDarkMode
                     ){
                         handleNavigationEvents(it)
                     }
 
                     }
-                }
+
             }
 
         }

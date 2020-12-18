@@ -4,6 +4,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -54,6 +55,9 @@ class MainViewModel @ViewModelInject constructor(
 
     private val _userPreferences= MutableStateFlow(UserPreferences(true))
 
+    val userPreferences:StateFlow<UserPreferences>
+    get() = _userPreferences
+
     val mainScreenState: StateFlow<MainScreenViewState>
         get() = _mainScreenState
 
@@ -65,6 +69,16 @@ class MainViewModel @ViewModelInject constructor(
 
     init {
         checkUserStatus()
+
+        viewModelScope.launch {
+            repository.userPreferencesFlow
+                .catch {
+                    emit(UserPreferences(true))
+                }.collect {
+                    _userPreferences.value=it
+                }
+        }
+
         viewModelScope.launch {
             combine(
                 getSectionViewState(CategoryType.Movies),
@@ -98,6 +112,20 @@ class MainViewModel @ViewModelInject constructor(
         }
     }
 
+    fun changeDarkMode(darkMode:Boolean){
+        viewModelScope.launch {
+            repository.changeDarkMode(darkMode)
+                .catch {
+                    //TODO SHOW Error
+                }
+                .collect {state->
+                    if (state is DataState.Failed){
+                        //TODO SHOW Error
+                    }
+                }
+        }
+    }
+
     fun switchToSearchMode(inSearchMode: Boolean) {
         _inSearchMode.value = inSearchMode
         if (inSearchMode) {
@@ -111,6 +139,8 @@ class MainViewModel @ViewModelInject constructor(
             _selectedTvCategory.value = _lastSelectedTvCategory
         }
     }
+
+
 
     fun performSearch(query: String) {
         _searchQuery.value = query
@@ -246,36 +276,6 @@ class MainViewModel @ViewModelInject constructor(
         _isUserSignedIn.value=false
         FirebaseAuthUtil.signOut()
     }
-
-    fun onUserStateChange(userViewState: UserViewState) {
-//        when (userState.inEditMode) {
-//            true -> {
-//                _userSate.value=userState
-//            }
-//            false -> {
-//                if (userState.shouldSave) {
-//                    val user = _userSate.value.user
-//                    user?.let {
-//                        it.profilePicturePath?.let { photoUri ->
-//                            FirebaseStorageUtil.uploadProfilePhoto(photoUri as Uri) { downloadLink, throwable ->
-//                                if (throwable != null || downloadLink == null) {
-//                                    //TODO handle error
-//                                    throw throwable
-//                                        ?: NullPointerException("Failed to upload photo")
-//                                } else {
-//                                    updateUserInfo(name = "", imageUri = downloadLink)
-//                                }
-//                            }
-//                        }
-//                        updateUserInfo(name = user.name, imageUri = null)
-//                    }
-//
-//                }
-//                getUserInfo()
-//            }
-//        }
-    }
-
 
     fun bufferPhoto(uri: Uri) {
         val tmpUser=_userInEdit.value?.copy(pictureUri = uri)
