@@ -42,14 +42,10 @@ import com.example.imdbviewer.util.*
 import dev.chrisbanes.accompanist.coil.CoilImage
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
-import kotlin.reflect.KFunction1
-
-private val TAG = "aminjoon"
 
 
 @FlowPreview
 @ExperimentalCoroutinesApi
-
 @Composable
 fun MainScreen(
     viewModel: MainViewModel,
@@ -57,14 +53,12 @@ fun MainScreen(
     screenNavigationEvents: (ScreenNavigationEvents) -> Unit
 ) {
     val scaffoldState = rememberScaffoldState()
-
     val viewState by viewModel.mainScreenState.collectAsState()
     val userStatus by viewModel.isUserSignedIn.collectAsState()
     Scaffold(
         scaffoldState = scaffoldState,
         backgroundColor = MaterialTheme.colors.primary,
         drawerContent = {
-
             DrawerContent(
                 isUserSignedIn = userStatus,
                 userInEdit = viewModel.userInEdit,
@@ -134,7 +128,6 @@ fun MainScreen(
             )
         }
     )
-
 }
 
 
@@ -162,13 +155,11 @@ fun MainContent(
             mainScreenInteractionEvents = navigationEvents,
             onCategorySelected = onCategorySelected
         )
-
     }
 }
 
 
 @ExperimentalCoroutinesApi
-
 @Composable
 fun DrawerContent(
     isUserSignedIn: Boolean,
@@ -185,7 +176,6 @@ fun DrawerContent(
         ScrollableColumn(
             verticalArrangement = Arrangement.Top,
         ) {
-
             if (!isUserSignedIn) {
                 DrawerButton(text = "Login", icon = Icons.Default.Login, onclick = {
                     scaffoldState.drawerState.close(onClosed = {
@@ -203,8 +193,6 @@ fun DrawerContent(
                     onEditUserDone = onEditDone
                 )
             }
-
-
             DrawerButton(text = "Favorites", icon = Icons.Default.Favorite, onclick = {
                 scaffoldState.drawerState.close(onClosed = {
                     navigationEvent(
@@ -218,18 +206,13 @@ fun DrawerContent(
                     scaffoldState.drawerState.close(onClosed = onSignOut)
                 })
             }
-
         }
-
 
         onCommit(scaffoldState.drawerState.isOpen) {
             onEditDone(false)
         }
-
     }
-
 }
-
 
 @Composable
 fun ProfileSection(
@@ -267,7 +250,6 @@ fun ProfileSection(
                     Text(text = "Error: ${state.message}")
                 }
             }
-
         }
     }
 }
@@ -298,7 +280,6 @@ fun ProfileInfo(
                 inEditMode = inEditMode,
                 onSelectPhoto = onSelectPhoto
             )
-
             Spacer(modifier = Modifier.weight(1f))
             if (inEditMode) {
                 ConfirmRejectButtons(
@@ -308,7 +289,6 @@ fun ProfileInfo(
                         onEditDone(false)
                     })
             }
-
         }
         Spacer(modifier = Modifier.preferredHeight(8.dp))
         if (inEditMode) {
@@ -445,7 +425,6 @@ fun CategorySection(
 ) {
     val (isEmpty, setCheck) = remember { mutableStateOf(true) }
     Column(modifier = modifier) {
-
         if (!inSearchMode || !isEmpty) {
             Text(text = type.title)
             Divider(
@@ -506,7 +485,6 @@ fun TmdbSectionWithTab(
     onCategorySelected: (Category) -> Unit,
     content: @Composable (TransitionState) -> Unit
 ) {
-
     Column(modifier = modifier) {
         var prevSelectedCategory by remember { mutableStateOf<Category?>(null) }
         CategoryTabs(
@@ -514,7 +492,6 @@ fun TmdbSectionWithTab(
             selectedCategory = selectedCategory,
             onCategorySelected = onCategorySelected
         )
-
         val reverseTransition = prevSelectedCategory?.let { p ->
             subCategories.indexOf(p) > subCategories.indexOf(
                 selectedCategory
@@ -536,7 +513,6 @@ fun TmdbSectionWithTab(
         }
     }
 }
-
 
 @Composable
 fun TmdbRowPagination(
@@ -622,8 +598,6 @@ fun TmdbItem(
     modifier: Modifier = Modifier,
     onItemClick: (TmdbListItem) -> Unit,
 ) {
-
-
     Card(
         modifier = modifier.clip(shape = RoundedCornerShape(8.dp))
             .clickable(
@@ -674,65 +648,8 @@ fun TmdbItem(
     }
 }
 
-private val Alpha = FloatPropKey("alpha")
-private val Offset = FloatPropKey("offset")
 
-@Composable
-private fun getChoiceChipTransitionDefinition(
-    duration: Int = 183,
-    offsetPx: Float,
-    reverse: Boolean = false
-): TransitionDefinition<ItemTransitionState> = remember(reverse, offsetPx, duration) {
-    transitionDefinition {
-        state(ItemTransitionState.Visible) {
-            this[Alpha] = 1f
-            this[Offset] = 0f
-        }
-        state(ItemTransitionState.BecomingVisible) {
-            this[Alpha] = 0f
-            this[Offset] = if (reverse) -offsetPx else offsetPx
-        }
-        state(ItemTransitionState.BecomingNotVisible) {
-            this[Alpha] = 0f
-            this[Offset] = if (reverse) offsetPx else -offsetPx
-        }
 
-        val halfDuration = duration
 
-        transition(
-            fromState = ItemTransitionState.BecomingVisible,
-            toState = ItemTransitionState.Visible
-        ) {
-            // TODO: look at whether this can be implemented using `spring` to enable
-            //  interruptions, etc
-            Alpha using tween(
-                durationMillis = halfDuration,
-                delayMillis = halfDuration,
-                easing = LinearEasing
-            )
-            Offset using tween(
-                durationMillis = halfDuration,
-                delayMillis = halfDuration,
-                easing = LinearOutSlowInEasing
-            )
-        }
-
-        transition(
-            fromState = ItemTransitionState.Visible,
-            toState = ItemTransitionState.BecomingNotVisible
-        ) {
-            Alpha using tween(
-                durationMillis = 1,
-                easing = LinearEasing,
-                delayMillis = 1
-            )
-            Offset using tween(
-                durationMillis = 1,
-                easing = LinearOutSlowInEasing,
-                delayMillis = 1
-            )
-        }
-    }
-}
 
 

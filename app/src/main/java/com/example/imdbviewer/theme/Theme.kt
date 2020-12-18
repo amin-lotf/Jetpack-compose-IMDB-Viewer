@@ -7,17 +7,6 @@ import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-private val LightColors = lightColors(
-    primary = Red700,
-    primaryVariant = Red900,
-    onPrimary = Color.White,
-    secondary = Red700,
-    secondaryVariant = Red900,
-    onSecondary = Color.White,
-    error = Red800,
-    )
-
-
 
 private val BlueThemeLight = lightColors(
     primary = Color.White,
@@ -28,12 +17,11 @@ private val BlueThemeLight = lightColors(
     error = Red200,
     onSecondary = Color.White,
     surface = blue800,
-    onSurface =Color.White,
+    onSurface = Color.White,
 )
 
 
-
-private val DarkNew=darkColors(
+private val DarkColors = darkColors(
     primary = blueGray700,
     primaryVariant = Red300,
     onPrimary = Color.White,
@@ -41,23 +29,15 @@ private val DarkNew=darkColors(
     error = Red200,
     onSecondary = Color.White,
     surface = blueGray900,
-    onSurface =Color.White,
+    onSurface = Color.White,
 
-)
+    )
 
-private val DarkColors = darkColors(
-    primary = Red300,
-    primaryVariant = Red700,
-    onPrimary = Color.Black,
-    secondary = Red300,
-    onSecondary = Color.White,
-    error = Red200
-)
 
 @Composable
 fun IMDBViewerTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable() () -> Unit) {
     val colors = if (darkTheme) {
-        DarkNew
+        DarkColors
     } else {
         BlueThemeLight
     }

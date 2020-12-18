@@ -63,6 +63,4 @@ class DetailsFragment : Fragment() {
         }
         return view
     }
-
-
 }

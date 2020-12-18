@@ -16,7 +16,7 @@ class UserMapper @Inject constructor(): DomainMapper<UserDto, User> {
         )
     }
 
-    override fun mapFromDoaminModel(from: User): UserDto {
+    override fun mapFromDomainModel(from: User): UserDto {
         return UserDto(
             name = from.name,
             profilePicturePath = from.profilePicturePath

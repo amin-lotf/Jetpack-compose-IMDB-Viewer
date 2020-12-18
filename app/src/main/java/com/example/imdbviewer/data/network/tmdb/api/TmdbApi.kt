@@ -11,51 +11,51 @@ interface TmdbApi {
 
     @GET("search/movie")
     suspend fun queryMovies(
-        @Query("query") query:String,
-        @Query("api_key") apiKey:String,
-        @Query("page") page:Int
-    ):Response<TmdbMovieListResponse>
+        @Query("query") query: String,
+        @Query("api_key") apiKey: String,
+        @Query("page") page: Int
+    ): Response<TmdbMovieListResponse>
 
     @GET("search/tv")
     suspend fun queryTVs(
-        @Query("query") query:String,
-        @Query("api_key") apiKey:String,
-        @Query("page") page:Int
-    ):Response<TmdbTVListResponse>
+        @Query("query") query: String,
+        @Query("api_key") apiKey: String,
+        @Query("page") page: Int
+    ): Response<TmdbTVListResponse>
 
 
     @GET("{type}/{category}")
-    suspend fun  getMoviesByCategory(
-        @Path("type") type:String,
-        @Path("category") category:String,
-        @Query("api_key") apiKey:String,
-        @Query("page") page:Int
-    ):Response<TmdbMovieListResponse>
+    suspend fun getMoviesByCategory(
+        @Path("type") type: String,
+        @Path("category") category: String,
+        @Query("api_key") apiKey: String,
+        @Query("page") page: Int
+    ): Response<TmdbMovieListResponse>
 
     @GET("{type}/{category}")
-    suspend fun  getTvsByCategory(
-        @Path("type") type:String,
-        @Path("category") category:String,
-        @Query("api_key") apiKey:String,
-        @Query("page") page:Int
-    ):Response<TmdbTVListResponse>
+    suspend fun getTvsByCategory(
+        @Path("type") type: String,
+        @Path("category") category: String,
+        @Query("api_key") apiKey: String,
+        @Query("page") page: Int
+    ): Response<TmdbTVListResponse>
 
 
     @GET("movie/{movieId}")
     suspend fun getMovieDetails(
-        @Path("movieId") movieId:Int,
+        @Path("movieId") movieId: Int,
         @Query("api_key") apiKey: String,
-        @Query("append_to_response") details:String="credits"
-    ):Response<TmdbMovieDetailsDto>
+        @Query("append_to_response") details: String = "credits"
+    ): Response<TmdbMovieDetailsDto>
 
     @GET("tv/{tvId}")
     suspend fun getTVDetails(
-        @Path("tvId") tvId:Int,
+        @Path("tvId") tvId: Int,
         @Query("api_key") apiKey: String,
-        @Query("append_to_response") details:String="credits"
-    ):Response<TmdbTVDetailsDto>
+        @Query("append_to_response") details: String = "credits"
+    ): Response<TmdbTVDetailsDto>
 
-    companion object{
-        const val BASE_URL="https://api.themoviedb.org/3/"
+    companion object {
+        const val BASE_URL = "https://api.themoviedb.org/3/"
     }
 }

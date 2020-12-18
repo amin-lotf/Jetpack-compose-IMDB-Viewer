@@ -9,7 +9,6 @@ package com.example.imdbviewer.data.network
 //    private val movieDatabase: MovieRoomDatabase
 //) : RemoteMediator<Int, T>() {
 //
-//    private val TAG="Aminjoon"
 //
 //    override suspend fun load(loadType: LoadType, state: PagingState<Int, T>): MediatorResult {
 //        Log.d(TAG, "load: $loadType")

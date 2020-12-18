@@ -9,7 +9,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class MovieDetailsMapper  @Inject constructor():
+class MovieDetailsMapper @Inject constructor() :
     DomainMapper<TmdbMovieDetailsDto, TmdbItemDetails> {
 
 
@@ -18,23 +18,23 @@ class MovieDetailsMapper  @Inject constructor():
             from.credits?.crew?.filter { it.job == "Director" }?.map { it.name }
         return TmdbItemDetails(
             id = from.id,
-            title = from.title?:"",
-            details = from.overview?:"",
-            genres = from.genres?: emptyList(),
-            director = director?: emptyList(),
-            cast = from.credits?.cast?.sortedBy { it.order }?: emptyList(),
-            posterPath = from.poster_path?:"",
-            backdropPath = from.backdropPath?:"",
-            releaseYear = from.release_date?.mapToYear()?:"",
-            duration = from.runtime?:0,
-            voteAverage = from.vote_average?:0.0,
-            voteCount = from.vote_count?:0,
+            title = from.title ?: "",
+            details = from.overview ?: "",
+            genres = from.genres ?: emptyList(),
+            director = director ?: emptyList(),
+            cast = from.credits?.cast?.sortedBy { it.order } ?: emptyList(),
+            posterPath = from.poster_path ?: "",
+            backdropPath = from.backdropPath ?: "",
+            releaseYear = from.release_date?.mapToYear() ?: "",
+            duration = from.runtime ?: 0,
+            voteAverage = from.vote_average ?: 0.0,
+            voteCount = from.vote_count ?: 0,
             isFavorite = from.isFavorite,
             category = CategoryType.Movies.label
         )
     }
 
-    override fun mapFromDoaminModel(from: TmdbItemDetails): TmdbMovieDetailsDto? {
+    override fun mapFromDomainModel(from: TmdbItemDetails): TmdbMovieDetailsDto? {
         //No Need in this project
         return null
     }

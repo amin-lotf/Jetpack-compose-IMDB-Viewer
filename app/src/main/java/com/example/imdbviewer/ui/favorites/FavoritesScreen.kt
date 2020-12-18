@@ -24,7 +24,6 @@ import com.example.imdbviewer.util.ImageConfig.posterWidth
 import com.example.imdbviewer.util.ScreenNavigationEvents
 import kotlinx.coroutines.flow.StateFlow
 
-private val TAG="aminjoon"
 
 @ExperimentalCoroutinesApi
 @Composable
@@ -63,8 +62,6 @@ fun FavoriteScreen(
             screenNavigationEvents = screenNavigationEvents
         )
     }
-
-
 }
 
 @Composable
@@ -109,11 +106,11 @@ fun FavoriteMainContent(
     val items = viewState.favorites
     WithConstraints {
 
-        val itemPadding=8.dp
-        val itemWidth=posterWidth+itemPadding*2 // both side
-        val numCols=(maxWidth/itemWidth).toInt()
+        val itemPadding = 8.dp
+        val itemWidth = posterWidth + itemPadding * 2 // both side
+        val numCols = (maxWidth / itemWidth).toInt()
 
-        GridLayout(cols = numCols) {
+        GridLayout(cols = numCols, modifier = modifier) {
             for (item in items) {
                 TmdbItem(
                     item = item,
@@ -125,5 +122,4 @@ fun FavoriteMainContent(
             }
         }
     }
-
 }

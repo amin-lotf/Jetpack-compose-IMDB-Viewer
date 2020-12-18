@@ -9,7 +9,7 @@ import java.io.IOException
 class TMDbPagingSource(
     private val query: suspend (page: Int) -> List<TmdbListItem>
 ) : PagingSource<Int, TmdbListItem>() {
-    val TAG = "aminjoon"
+
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, TmdbListItem> {
         val page = params.key ?: TMDB_STARTING_PAGE
         return try {
@@ -20,11 +20,9 @@ class TMDbPagingSource(
                 nextKey = if (items.isEmpty()) null else page + 1
             )
         } catch (exception: IOException) {
-            Log.d(TAG, "load io error: ")
             exception.printStackTrace()
             LoadResult.Error(exception)
         } catch (exception: HttpException) {
-            Log.d(TAG, "load http error: ")
             exception.printStackTrace()
             LoadResult.Error(exception)
         }

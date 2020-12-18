@@ -27,15 +27,13 @@ class MainViewModel @ViewModelInject constructor(
     val repository: Repository
 ) : ViewModel() {
 
-    private val TAG = "aminjoon"
+    private val TAG = "MainViewModel"
 
     private var _lastSelectedMovieCategory: Category = Category.NowPlayingMovies
     private var _lastSelectedTvCategory: Category = Category.AiringTodayTVs
 
-    private val _userInEdit = mutableStateOf<User?>(null)
 
-    val userInEdit: State<User?>
-        get() = _userInEdit
+    private val _userInEdit = mutableStateOf<User?>(null)
 
 
     private val _isUserSignedIn = MutableStateFlow(false)
@@ -48,7 +46,6 @@ class MainViewModel @ViewModelInject constructor(
     private val _inSearchMode = MutableStateFlow(false)
     private val _searchQuery = MutableStateFlow("")
 
-
     private val _moviesSubCategories =
         MutableStateFlow(repository.getCategories(CategoryType.Movies))
     private val _tvsSubCategories = MutableStateFlow(repository.getCategories(CategoryType.TVs))
@@ -58,6 +55,8 @@ class MainViewModel @ViewModelInject constructor(
     private val _userPreferences = MutableStateFlow(UserPreferences(true))
 
 
+    val userInEdit: State<User?>
+        get() = _userInEdit
 
     val userPreferences: StateFlow<UserPreferences>
         get() = _userPreferences

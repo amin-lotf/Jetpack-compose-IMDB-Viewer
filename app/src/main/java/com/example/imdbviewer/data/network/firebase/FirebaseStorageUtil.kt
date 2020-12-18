@@ -10,7 +10,7 @@ import kotlinx.coroutines.tasks.await
 import java.util.*
 
 object FirebaseStorageUtil {
-    private val TAG = "aminjoon"
+
     private val storageInstance by lazy {
         FirebaseStorage.getInstance()
     }
@@ -28,9 +28,8 @@ object FirebaseStorageUtil {
     }
 
 
-    suspend fun getPhotoLink(path: String?):Uri? {
+    suspend fun getPhotoLink(path: String?): Uri? {
         if (path == null) return null
         return storageInstance.getReference(path).downloadUrl.await()
-        //val link= storageInstance.getReferenceFromUrl(path).downloadUrl.await()
     }
 }

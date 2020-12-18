@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 class DetailViewModel @ViewModelInject constructor(
     private val repository: Repository
 ) : ViewModel() {
-    val TAG = "aminjoon"
+
 
     private var job: Job? = null
 
@@ -24,9 +24,9 @@ class DetailViewModel @ViewModelInject constructor(
 
     val state: StateFlow<DetailScreenViewState>
         get() = _state
-    private val _userPreferences= MutableStateFlow(UserPreferences(true))
+    private val _userPreferences = MutableStateFlow(UserPreferences(true))
 
-    val userPreferences:StateFlow<UserPreferences>
+    val userPreferences: StateFlow<UserPreferences>
         get() = _userPreferences
 
     init {
@@ -35,7 +35,7 @@ class DetailViewModel @ViewModelInject constructor(
                 .catch {
                     emit(UserPreferences(true))
                 }.collect {
-                    _userPreferences.value=it
+                    _userPreferences.value = it
                 }
         }
 
@@ -51,8 +51,6 @@ class DetailViewModel @ViewModelInject constructor(
         }
     }
 
-
-
     fun prepareDetailScreenViewState(tmdbId: Int, type: CategoryType) {
         viewModelScope.launch {
             repository.getTmdbItemDetails(itemId = tmdbId, type = type)
@@ -65,6 +63,4 @@ class DetailViewModel @ViewModelInject constructor(
                 }
         }
     }
-
-
 }

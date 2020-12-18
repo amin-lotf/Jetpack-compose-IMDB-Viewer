@@ -1,5 +1,6 @@
 package com.example.imdbviewer.ui.mainscreen
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ScrollableColumn
 import androidx.compose.foundation.background
@@ -27,6 +28,7 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.example.imdbviewer.util.ItemTransitionState
 
 @Composable
 fun AppIconButton(
@@ -36,26 +38,23 @@ fun AppIconButton(
     backgroundColor: Color = Color.Transparent,
     onClick: () -> Unit,
 ) {
-    Surface(contentColor = contentColor,color = Color.Transparent) {
-        IconButton(onClick =onClick,modifier = modifier.background(color = backgroundColor)) {
+    Surface(contentColor = contentColor, color = Color.Transparent) {
+        IconButton(onClick = onClick, modifier = modifier.background(color = backgroundColor)) {
             Icon(icon)
         }
 
     }
 }
 
-
-
 @Composable
 fun MainInputText(
     text: String,
     onTextChanged: (String) -> Unit,
-    placeholder:String,
+    placeholder: String,
     modifier: Modifier = Modifier,
     onImeAction: () -> Unit = {}
 ) {
     val focusRequester = remember { FocusRequester() }
-
 
     TextField(
         value = text,
@@ -130,11 +129,11 @@ fun GridLayout(
                 ?.coerceIn(constraints.minHeight.rangeTo(constraints.maxHeight))
                 ?: constraints.minHeight
 
-            val padding=(constraints.maxWidth-width)/2
+            val padding = (constraints.maxWidth - width) / 2
 
-            width+=padding
+            width += padding
             val colX = IntArray(cols) { 0 }
-            colX[0]=padding
+            colX[0] = padding
             for (i in 1 until cols) {
                 colX[i] = colX[i - 1] + colMaxWidths[i - 1]
             }
@@ -157,39 +156,59 @@ fun GridLayout(
     }
 }
 
+val Alpha = FloatPropKey("alpha")
+val Offset = FloatPropKey("offset")
+
 @Composable
-fun Chip(modifier: Modifier = Modifier, text: String) {
-    Card(
-        modifier = modifier.fillMaxWidth().preferredHeight(200.dp),
-        border = BorderStroke(color = Color.Black, width = Dp.Hairline),
-        shape = RoundedCornerShape(8.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(start = 8.dp, top = 4.dp, end = 8.dp, bottom = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier.preferredSize(16.dp, 16.dp)
-                    .background(color = MaterialTheme.colors.secondary)
-            )
-            Spacer(Modifier.preferredWidth(4.dp))
-            Text(text = text)
+fun getChoiceChipTransitionDefinition(
+    duration: Int = 183,
+    offsetPx: Float,
+    reverse: Boolean = false
+): TransitionDefinition<ItemTransitionState> = remember(reverse, offsetPx, duration) {
+    transitionDefinition {
+        state(ItemTransitionState.Visible) {
+            this[Alpha] = 1f
+            this[Offset] = 0f
         }
-    }
-}
+        state(ItemTransitionState.BecomingVisible) {
+            this[Alpha] = 0f
+            this[Offset] = if (reverse) -offsetPx else offsetPx
+        }
+        state(ItemTransitionState.BecomingNotVisible) {
+            this[Alpha] = 0f
+            this[Offset] = if (reverse) offsetPx else -offsetPx
+        }
 
-val topics = listOf(
-    "Arts & Crafts", "Beauty", "Books", "Business", "Comics", "Culinary",
-    "Design", "Fashion", "Film", "History", "Maths", "Music", "People", "Philosophy",
-    "Religion", "Social sciences", "Technology", "TV", "Writing"
-)
+        transition(
+            fromState = ItemTransitionState.BecomingVisible,
+            toState = ItemTransitionState.Visible
+        ) {
+            Alpha using tween(
+                durationMillis = duration,
+                delayMillis = duration,
+                easing = LinearEasing
+            )
+            Offset using tween(
+                durationMillis = duration,
+                delayMillis = duration,
+                easing = LinearOutSlowInEasing
+            )
+        }
 
-
-@Composable
-fun BodyContent(modifier: Modifier = Modifier) {
-    GridLayout(modifier = modifier) {
-        for (topic in topics) {
-            Chip(modifier = Modifier.padding(8.dp), text = topic)
+        transition(
+            fromState = ItemTransitionState.Visible,
+            toState = ItemTransitionState.BecomingNotVisible
+        ) {
+            Alpha using tween(
+                durationMillis = 1,
+                easing = LinearEasing,
+                delayMillis = 1
+            )
+            Offset using tween(
+                durationMillis = 1,
+                easing = LinearOutSlowInEasing,
+                delayMillis = 1
+            )
         }
     }
 }

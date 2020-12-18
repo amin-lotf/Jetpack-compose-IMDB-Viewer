@@ -13,45 +13,39 @@ import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
 
 object FirestoreUtil {
-    private val TAG = "aminjoon"
+
     private val firestore by lazy {
         FirebaseFirestore.getInstance()
     }
 
-
-     val curUserDocRef: DocumentReference
+    val curUserDocRef: DocumentReference
         get() = firestore.document("users/$userId")
 
-    private val favoritesCollectionRef:CollectionReference
-    get() = firestore.collection("favorites").document("users").collection(userId)
+    private val favoritesCollectionRef: CollectionReference
+        get() = firestore.collection("favorites").document("users").collection(userId)
 
-
-
-    suspend fun insertIntoFavorites(tmdbListItem: FavoriteItemDto){
+    suspend fun insertIntoFavorites(tmdbListItem: FavoriteItemDto) {
         favoritesCollectionRef.document(tmdbListItem.id.toString())
             .set(
                 tmdbListItem.apply {
-                    timeSynced=System.currentTimeMillis()
-                                   },
+                    timeSynced = System.currentTimeMillis()
+                },
                 SetOptions.merge()
             )
             .await()
     }
 
-
-    suspend fun removeFromFavorites(itemId:Int){
-        val documentSnapshot= favoritesCollectionRef.document(itemId.toString()).get().await()
-        if (documentSnapshot.exists()){
+    suspend fun removeFromFavorites(itemId: Int) {
+        val documentSnapshot = favoritesCollectionRef.document(itemId.toString()).get().await()
+        if (documentSnapshot.exists()) {
             favoritesCollectionRef.document(itemId.toString()).delete().await()
         }
     }
 
     suspend fun getSyncedFavorites(): List<FavoriteItemDto> {
-        val querySnapshot=favoritesCollectionRef.get().await()
+        val querySnapshot = favoritesCollectionRef.get().await()
         return querySnapshot.map { it.toObject(FavoriteItemDto::class.java) }
     }
-
-
 
     suspend fun initCurUserIfFirstTime() {
         val documentSnapshot = curUserDocRef.get().await()
@@ -71,8 +65,5 @@ object FirestoreUtil {
             userFileMap["profilePicturePath"] = profilePicturePath
         }
         curUserDocRef.update(userFileMap).await()
-
     }
-
-
 }

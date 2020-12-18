@@ -18,12 +18,12 @@ object ImageConfig {
     val backdropPath: String
         get() = "$BASE_URL$BACKDROP_SIZE"
 
-    val logoPath:String
+    val logoPath: String
         get() = "$BASE_URL$LOGO_SIZE"
 
-    val posterWidth=150.dp
-    val posterHeight=250.dp
+    val posterWidth = 150.dp
+    val posterHeight = 250.dp
 
-    val personPosterWidth=100.dp
-    val personPosterHeight=220.dp
+    val personPosterWidth = 100.dp
+    val personPosterHeight = 220.dp
 }

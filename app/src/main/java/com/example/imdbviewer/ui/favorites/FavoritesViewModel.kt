@@ -18,8 +18,6 @@ class FavoritesViewModel @ViewModelInject constructor(
     private val repository: Repository
 ) : ViewModel() {
 
-    private val TAG = "aminjoon"
-
     private val _favoritesState = MutableStateFlow(FavoriteScreenViewState())
     private val _syncStat = MutableStateFlow<DataState<Unit>?>(null)
 
@@ -29,9 +27,9 @@ class FavoritesViewModel @ViewModelInject constructor(
     val synStat: StateFlow<DataState<Unit>?>
         get() = _syncStat
 
-    private val _userPreferences= MutableStateFlow(UserPreferences(true))
+    private val _userPreferences = MutableStateFlow(UserPreferences(true))
 
-    val userPreferences:StateFlow<UserPreferences>
+    val userPreferences: StateFlow<UserPreferences>
         get() = _userPreferences
 
     init {
@@ -41,14 +39,13 @@ class FavoritesViewModel @ViewModelInject constructor(
                 .catch {
                     emit(UserPreferences(true))
                 }.collect {
-                    _userPreferences.value=it
+                    _userPreferences.value = it
                 }
         }
 
         viewModelScope.launch {
             repository.getSavedItems()
                 .catch {
-                    Log.d(TAG, "Error in favoriteViewModel: ")
                     it.printStackTrace()
                 }.collect { list ->
                     _favoritesState.value = FavoriteScreenViewState(
@@ -58,20 +55,17 @@ class FavoritesViewModel @ViewModelInject constructor(
         }
     }
 
-
-    fun onRequestSync(){
+    fun onRequestSync() {
         viewModelScope.launch {
             repository.syncFavoriteList()
                 .flowOn(Dispatchers.IO)
-                .catch {e->
-                        Log.d(TAG, "onRequestSync: error")
-                        e.printStackTrace()
-                        emit(DataState.failed("Failed to sync"))
+                .catch { e ->
+                    e.printStackTrace()
+                    emit(DataState.failed("Failed to sync"))
 
                 }.collect {
-                    _syncStat.value=it
+                    _syncStat.value = it
                 }
         }
-
     }
 }

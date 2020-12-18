@@ -23,7 +23,7 @@ import androidx.compose.runtime.getValue
 
 @ExperimentalCoroutinesApi
 @AndroidEntryPoint
-class FavoritesFragment:Fragment() {
+class FavoritesFragment : Fragment() {
 
     private val favoriteViewModel by viewModels<FavoritesViewModel>()
 
@@ -32,15 +32,14 @@ class FavoritesFragment:Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val view=ComposeView(requireContext())
+        val view = ComposeView(requireContext())
         view.apply {
             setContent {
                 val userPreferences by favoriteViewModel.userPreferences.collectAsState()
                 IMDBViewerTheme(darkTheme = userPreferences.inDarkMode) {
-                        FavoriteScreen(viewModel = favoriteViewModel){
-                            handleNavigationEvents(it)
-                        }
-
+                    FavoriteScreen(viewModel = favoriteViewModel) {
+                        handleNavigationEvents(it)
+                    }
                 }
             }
         }
@@ -49,15 +48,18 @@ class FavoritesFragment:Fragment() {
 
     fun handleNavigationEvents(
         navigationEvents: ScreenNavigationEvents
-    ){
-        when(navigationEvents){
+    ) {
+        when (navigationEvents) {
             is ScreenNavigationEvents.NavigateToItemDetails -> {
-                val bundle= bundleOf("tmdbId" to navigationEvents.item.id, "categoryType" to navigationEvents.item.category)
-                findNavController().navigate(R.id.action_nav_favorites_to_detailsFragment,bundle)
-
+                val bundle = bundleOf(
+                    "tmdbId" to navigationEvents.item.id,
+                    "categoryType" to navigationEvents.item.category
+                )
+                findNavController().navigate(R.id.action_nav_favorites_to_detailsFragment, bundle)
             }
-            ScreenNavigationEvents.NavigateBack->findNavController().popBackStack()
-            else -> {}
+            ScreenNavigationEvents.NavigateBack -> findNavController().popBackStack()
+            else -> {
+            }
         }
     }
 }

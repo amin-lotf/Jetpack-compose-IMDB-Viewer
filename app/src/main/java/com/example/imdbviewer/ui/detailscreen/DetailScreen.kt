@@ -136,11 +136,6 @@ fun DetailsContent(
         Spacer(Modifier.preferredHeight((containerHeight - 320.dp).coerceAtLeast(0.dp)))
 
     }
-//    else{
-//        Box(modifier = Modifier.fillMaxSize()) {
-//            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-//        }
-//    }
 }
 
 

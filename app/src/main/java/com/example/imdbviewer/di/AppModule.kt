@@ -49,7 +49,7 @@ object AppModule {
     fun provideSyncStatDao(movieRoomDatabase: MovieRoomDatabase)=
         movieRoomDatabase.syncStatDao()
 
-    @Singleton
+
     @Provides
     fun provideGsonBuilder(): Gson {
         return GsonBuilder()
@@ -57,7 +57,7 @@ object AppModule {
             .create()
     }
 
-    @Singleton
+
     @Provides
     fun provideOkhttpClient(@ApplicationContext context: Context): OkHttpClient {
         val cacheSize = 10 * 1024 * 1024

@@ -40,8 +40,6 @@ class Repository @Inject constructor(
     private val mappers: Mappers,
     private val dataStore:DataStore<Preferences>
 ) {
-    val TAG = "aminjoon"
-
 
     val userPreferencesFlow=dataStore.data
         .catch { exception->
@@ -68,59 +66,7 @@ class Repository @Inject constructor(
         }
 
     }
-
-    fun syncFavoriteList() = flow {
-
-        emit(DataState.Loading<Unit>())
-
-        val lastSyncStat = syncStatDao.getSyncStat()
-        val lastSyncTime = lastSyncStat?.lastSync ?: 0
-
-
-        val cloudData = FirestoreUtil.getSyncedFavorites()
-        FirestoreUtil.getSyncedFavorites()
-        val localData = tmdbDao.getFavoritesList()
-
-        val cloudDataIds = cloudData.map { it.id }
-        val localDataIds = localData.map { it.id }
-
-        val cloudDataIdsToRemove = cloudDataIds.subtract(localDataIds).map { id ->
-            cloudData.first { it.id == id }
-        }.filter { it.timeSynced!! < lastSyncTime }
-
-
-        cloudDataIdsToRemove.forEach {
-            FirestoreUtil.removeFromFavorites(it.id)
-        }
-
-        val localDataToRemove = localDataIds.subtract(cloudDataIds).map { id ->
-            localData.first { it.id == id }
-        }.filter { it.isSynced }
-
-
-        tmdbDao.deleteItems(localDataToRemove)
-
-        localData.forEach { entity ->
-            if (!entity.isSynced && !cloudDataIds.contains(entity.id)) {
-                FirestoreUtil.insertIntoFavorites(
-                    mappers.firestoreCacheMapper.mapToDto(entity)
-                )
-                tmdbDao.updateItem(entity.copy(isSynced = true))
-            }
-        }
-
-        val cloudDataToAdd = cloudData.filter { dto ->
-            dto.timeSynced!! > lastSyncTime && !localDataIds.contains(dto.id)
-        }
-
-        tmdbDao.insertTmdbItems(
-            cloudDataToAdd.map {
-                mappers.firestoreCacheMapper.mapToEntity(it)
-            }
-        )
-        updateSyncStat()
-        emit(DataState.success(Unit))
-    }
+    
 
     private suspend fun updateSyncStat() {
         syncStatDao.clearSyncStat()
@@ -214,29 +160,9 @@ class Repository @Inject constructor(
     fun getTmdbItemDetails(itemId: Int, type: CategoryType): Flow<TmdbItemDetails?> {
         val tmdbItemFlow = flow {
             val details = when (type) {
-                CategoryType.Movies -> {
-                    val response = tmdbApi.getMovieDetails(
-                        movieId = itemId,
-                        apiKey = TMDB_KEY
-                    )
-                    val details = response.body()
-                    details?.let {
-                        mappers.movieDetailsMapper.mapToDomainModel(it)
-                    }
-
-                }
-                CategoryType.TVs -> {
-                    val response = tmdbApi.getTVDetails(
-                        tvId = itemId,
-                        apiKey = TMDB_KEY
-                    )
-                    val details = response.body()
-                    details?.let {
-                        mappers.tvDetailsMapper.mapToDomainModel(it)
-                    }
-                }
+                CategoryType.Movies -> getMovieDetails(itemId)
+                CategoryType.TVs -> getTvDetails(itemId)
             }
-
             emit(details)
         }
         return combine(
@@ -246,6 +172,28 @@ class Repository @Inject constructor(
             tmdbItem?.copy(isFavorite = isSaved)
         }
 
+    }
+
+    private suspend fun getTvDetails(itemId: Int): TmdbItemDetails? {
+        val response = tmdbApi.getTVDetails(
+            tvId = itemId,
+            apiKey = TMDB_KEY
+        )
+        val details = response.body()
+        return details?.let {
+            mappers.tvDetailsMapper.mapToDomainModel(it)
+        }
+    }
+
+    private suspend fun getMovieDetails(itemId: Int): TmdbItemDetails? {
+        val response = tmdbApi.getMovieDetails(
+            movieId = itemId,
+            apiKey = TMDB_KEY
+        )
+        val details = response.body()
+        return details?.let {
+            mappers.movieDetailsMapper.mapToDomainModel(it)
+        }
     }
 
     fun getTMDbItemsByCategory(category: Category) =
@@ -266,61 +214,133 @@ class Repository @Inject constructor(
         if (category.name.trim().isBlank()) {
             return emptyList()
         }
-        when (category.categoryType) {
-            CategoryType.Movies -> {
-                val response = if (category is Category.SearchMovies) {
-                    tmdbApi.queryMovies(
-                        query = category.name.trim(),
-                        page = page,
-                        apiKey = TMDB_KEY
-                    )
-                } else {
-                    tmdbApi.getMoviesByCategory(
-                        type = category.categoryType.label,
-                        category = category.name,
-                        page = page,
-                        apiKey = TMDB_KEY
-                    )
-                }
-                val tmdbResponse = response.body()
-                if (response.isSuccessful && tmdbResponse != null) {
-                    return tmdbResponse.results.map {
-                        mappers.movieListItemMapper.mapToDomainModel(
-                            it
-                        )
-                    }
-                } else {
-                    throw IOException("Failed to catch the list from server")
-                }
+        return when (category.categoryType) {
+            CategoryType.Movies ->  getTmdbMovieList(category, page)
+            CategoryType.TVs -> getTmdbTvList(category, page)
+        }
+    }
 
+    private suspend fun getTmdbTvList(
+        category: Category,
+        page: Int
+    ): List<TmdbListItem> {
+        val response = requestTV(category, page)
+        val tmdbResponse = response.body()
+        if (response.isSuccessful && tmdbResponse != null) {
+            return tmdbResponse.results.map {
+                mappers.tvListItemMapper.mapToDomainModel(
+                    it
+                )
             }
-            CategoryType.TVs -> {
-                val response = if (category is Category.SearchTVs) {
-                    tmdbApi.queryTVs(
-                        query = category.name.trim(),
-                        page = page,
-                        apiKey = TMDB_KEY
-                    )
-                } else {
-                    tmdbApi.getTvsByCategory(
-                        type = category.categoryType.label,
-                        category = category.name,
-                        page = page,
-                        apiKey = TMDB_KEY
-                    )
-                }
-                val tmdbResponse = response.body()
-                if (response.isSuccessful && tmdbResponse != null) {
-                    return tmdbResponse.results.map {
-                        mappers.tvListItemMapper.mapToDomainModel(
-                            it
-                        )
-                    }
-                } else {
-                    throw IOException("Failed to catch the list from server")
-                }
+        } else {
+            throw IOException("Failed to catch the list from server")
+        }
+    }
+
+    private suspend fun getTmdbMovieList(
+        category: Category,
+        page: Int
+    ): List<TmdbListItem> {
+        val response = requestMovie(category, page)
+        val tmdbResponse = response.body()
+        if (response.isSuccessful && tmdbResponse != null) {
+            return tmdbResponse.results.map {
+                mappers.movieListItemMapper.mapToDomainModel(
+                    it
+                )
+            }
+        } else {
+            throw IOException("Failed to catch the list from server")
+        }
+    }
+
+    private suspend fun requestTV(
+        category: Category,
+        page: Int
+    ) = if (category is Category.SearchTVs) {
+        tmdbApi.queryTVs(
+            query = category.name.trim(),
+            page = page,
+            apiKey = TMDB_KEY
+        )
+    } else {
+        tmdbApi.getTvsByCategory(
+            type = category.categoryType.label,
+            category = category.name,
+            page = page,
+            apiKey = TMDB_KEY
+        )
+    }
+
+    private suspend fun requestMovie(
+        category: Category,
+        page: Int
+    ) = if (category is Category.SearchMovies) {
+        tmdbApi.queryMovies(
+            query = category.name.trim(),
+            page = page,
+            apiKey = TMDB_KEY
+        )
+    } else {
+        tmdbApi.getMoviesByCategory(
+            type = category.categoryType.label,
+            category = category.name,
+            page = page,
+            apiKey = TMDB_KEY
+        )
+    }
+
+    fun syncFavoriteList() = flow {
+
+        emit(DataState.Loading<Unit>())
+
+        val lastSyncStat = syncStatDao.getSyncStat()
+        val lastSyncTime = lastSyncStat?.lastSync ?: 0
+
+
+        val cloudData = FirestoreUtil.getSyncedFavorites()
+        FirestoreUtil.getSyncedFavorites()
+        val localData = tmdbDao.getFavoritesList()
+
+        val cloudDataIds = cloudData.map { it.id }
+        val localDataIds = localData.map { it.id }
+
+        val cloudDataIdsToRemove = cloudDataIds.subtract(localDataIds).map { id ->
+            cloudData.first { it.id == id }
+        }.filter { it.timeSynced!! < lastSyncTime }
+
+
+        cloudDataIdsToRemove.forEach {
+            FirestoreUtil.removeFromFavorites(it.id)
+        }
+
+        val localDataToRemove = localDataIds.subtract(cloudDataIds).map { id ->
+            localData.first { it.id == id }
+        }.filter { it.isSynced }
+
+
+        tmdbDao.deleteItems(localDataToRemove)
+
+        localData.forEach { entity ->
+            if (!entity.isSynced && !cloudDataIds.contains(entity.id)) {
+                FirestoreUtil.insertIntoFavorites(
+                    mappers.firestoreCacheMapper.mapToDto(entity)
+                )
+                tmdbDao.updateItem(entity.copy(isSynced = true))
             }
         }
+
+        val cloudDataToAdd = cloudData.filter { dto ->
+            dto.timeSynced!! > lastSyncTime && !localDataIds.contains(dto.id)
+        }
+
+        tmdbDao.insertTmdbItems(
+            cloudDataToAdd.map {
+                mappers.firestoreCacheMapper.mapToEntity(it)
+            }
+        )
+        updateSyncStat()
+        emit(DataState.success(Unit))
     }
 
     fun getCategories(type: CategoryType): List<Category> {

@@ -21,7 +21,7 @@ class ListItemMapper @Inject constructor():DomainMapper<ListItemEntity,TmdbListI
         )
     }
 
-    override fun mapFromDoaminModel(from: TmdbListItem): ListItemEntity {
+    override fun mapFromDomainModel(from: TmdbListItem): ListItemEntity {
         return ListItemEntity(
             id = from.id,
             posterPath = from.posterPath,

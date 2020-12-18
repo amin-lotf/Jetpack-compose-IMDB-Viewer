@@ -31,43 +31,37 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 
-val TAG = "aminjoon"
-
 @Composable
 fun <T : Any> RowLayoutPagination(
     flow: Flow<PagingData<T>>,
     modifier: Modifier = Modifier,
-    handleLoadStates:Boolean=true,
-    checkIfEmptyList:(Boolean)->Unit,
+    handleLoadStates: Boolean = true,
+    checkIfEmptyList: (Boolean) -> Unit,
     content: @Composable (T) -> Unit
 ) {
     val items = flow.collectAsLazyPagingItems()
-
-
-        LazyRow(
-            modifier = if (handleLoadStates) { modifier.preferredHeight(250.dp)} else modifier
-        ) {
-            items(items) { item ->
-                item?.let {
-                    Box(modifier = Modifier.preferredWidth(150.dp)) {
-                        content(item)
-                    }
+    LazyRow(
+        modifier = if (handleLoadStates) {
+            modifier.preferredHeight(250.dp)
+        } else modifier
+    ) {
+        items(items) { item ->
+            item?.let {
+                Box(modifier = Modifier.preferredWidth(150.dp)) {
+                    content(item)
                 }
             }
-            if(handleLoadStates) {
-                manageLoadState(loadState = items.loadState) {
-                    items.retry()
-                }
-            }
-            if (items.loadState.refresh is LoadState.NotLoading){
-                checkIfEmptyList(items.itemCount==0)
-            }
-
         }
-
-
+        if (handleLoadStates) {
+            manageLoadState(loadState = items.loadState) {
+                items.retry()
+            }
+        }
+        if (items.loadState.refresh is LoadState.NotLoading) {
+            checkIfEmptyList(items.itemCount == 0)
+        }
+    }
 }
-
 
 
 @Composable
@@ -89,7 +83,6 @@ fun LazyListScope.manageLoadState(
     loadState: CombinedLoadStates,
     onRetry: () -> Unit
 ) {
-
     when {
         loadState.refresh is LoadState.Loading -> {
             item {
@@ -136,5 +129,4 @@ fun LazyListScope.manageLoadState(
             }
         }
     }
-
 }

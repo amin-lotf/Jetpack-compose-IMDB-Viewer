@@ -14,44 +14,6 @@ sealed class DataState<T> {
 }
 
 
-//data class DataState<T>(
-//    var stateMessage: Event<StateMessage>? = null,
-//    var data: T? = null
-//) {
-//
-//    companion object {
-//
-//        fun <T> error(
-//            response: Response
-//        ): DataState<T> {
-//            return DataState(
-//                stateMessage = Event(
-//                    StateMessage(
-//                        response
-//                    )
-//                ),
-//                data = null
-//            )
-//        }
-//
-//        fun <T> data(
-//            response: Response?,
-//            data: T? = null
-//        ): DataState<T> {
-//            return DataState(
-//                stateMessage = response?.let {
-//                    Event(
-//                        StateMessage(
-//                            it
-//                        )
-//                    )
-//                },
-//                data = data
-//            )
-//        }
-//    }
-//}
-
 
 open class Event<out T>(private val content: T) {
 
