@@ -107,18 +107,20 @@ fun MainScreen(
                         onClick = viewModel::switchToSearchMode,
                         inSearchMode = viewState.inSearchMode
                     )
-                    if (inDarkMode) {
-                        AppIconButton(
-                            icon = Icons.Default.WbSunny,
-                            onClick = { viewModel.changeDarkMode(!inDarkMode) },
-                            modifier = Modifier.align(alignment = Alignment.Top)
-                        )
-                    } else {
-                        AppIconButton(
-                            icon = Icons.Default.NightShelter,
-                            onClick = { viewModel.changeDarkMode(!inDarkMode) },
-                            modifier = Modifier.align(alignment = Alignment.Top)
-                        )
+                    if (!viewState.inSearchMode) {
+                        if (inDarkMode) {
+                            AppIconButton(
+                                icon = Icons.Default.WbSunny,
+                                onClick = { viewModel.changeDarkMode(!inDarkMode) },
+                                modifier = Modifier.align(alignment = Alignment.Top)
+                            )
+                        } else {
+                            AppIconButton(
+                                icon = Icons.Filled.NightsStay,
+                                onClick = { viewModel.changeDarkMode(!inDarkMode) },
+                                modifier = Modifier.align(alignment = Alignment.Top)
+                            )
+                        }
                     }
                 }
             )
@@ -179,7 +181,7 @@ fun DrawerContent(
     navigationEvent: (ScreenNavigationEvents) -> Unit,
     scaffoldState: ScaffoldState,
 ) {
-    Surface(color = MaterialTheme.colors.primary,modifier = modifier.fillMaxHeight()) {
+    Surface(color = MaterialTheme.colors.primary, modifier = modifier.fillMaxHeight()) {
         ScrollableColumn(
             verticalArrangement = Arrangement.Top,
         ) {

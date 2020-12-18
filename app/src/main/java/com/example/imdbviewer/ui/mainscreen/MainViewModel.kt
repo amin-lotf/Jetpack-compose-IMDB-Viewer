@@ -2,6 +2,7 @@ package com.example.imdbviewer.ui.mainscreen
 
 import android.net.Uri
 import android.util.Log
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.datastore.preferences.core.emptyPreferences
@@ -31,10 +32,10 @@ class MainViewModel @ViewModelInject constructor(
     private var _lastSelectedMovieCategory: Category = Category.NowPlayingMovies
     private var _lastSelectedTvCategory: Category = Category.AiringTodayTVs
 
-    private val _userInEdit= mutableStateOf<User?>(null)
+    private val _userInEdit = mutableStateOf<User?>(null)
 
     val userInEdit: State<User?>
-    get() = _userInEdit
+        get() = _userInEdit
 
 
     private val _isUserSignedIn = MutableStateFlow(false)
@@ -47,16 +48,19 @@ class MainViewModel @ViewModelInject constructor(
     private val _inSearchMode = MutableStateFlow(false)
     private val _searchQuery = MutableStateFlow("")
 
+
     private val _moviesSubCategories =
         MutableStateFlow(repository.getCategories(CategoryType.Movies))
     private val _tvsSubCategories = MutableStateFlow(repository.getCategories(CategoryType.TVs))
 
     private val _mainScreenState = MutableStateFlow(MainScreenViewState())
 
-    private val _userPreferences= MutableStateFlow(UserPreferences(true))
+    private val _userPreferences = MutableStateFlow(UserPreferences(true))
 
-    val userPreferences:StateFlow<UserPreferences>
-    get() = _userPreferences
+
+
+    val userPreferences: StateFlow<UserPreferences>
+        get() = _userPreferences
 
     val mainScreenState: StateFlow<MainScreenViewState>
         get() = _mainScreenState
@@ -75,7 +79,7 @@ class MainViewModel @ViewModelInject constructor(
                 .catch {
                     emit(UserPreferences(true))
                 }.collect {
-                    _userPreferences.value=it
+                    _userPreferences.value = it
                 }
         }
 
@@ -112,14 +116,14 @@ class MainViewModel @ViewModelInject constructor(
         }
     }
 
-    fun changeDarkMode(darkMode:Boolean){
+    fun changeDarkMode(darkMode: Boolean) {
         viewModelScope.launch {
             repository.changeDarkMode(darkMode)
                 .catch {
                     //TODO SHOW Error
                 }
-                .collect {state->
-                    if (state is DataState.Failed){
+                .collect { state ->
+                    if (state is DataState.Failed) {
                         //TODO SHOW Error
                     }
                 }
@@ -139,7 +143,6 @@ class MainViewModel @ViewModelInject constructor(
             _selectedTvCategory.value = _lastSelectedTvCategory
         }
     }
-
 
 
     fun performSearch(query: String) {
@@ -233,27 +236,27 @@ class MainViewModel @ViewModelInject constructor(
     }
 
     fun onEditUserInfo(user: User) {
-        _userInEdit.value=user
+        _userInEdit.value = user
         Log.d(TAG, "onEditUserInfo: $user")
     }
 
-    fun onEditUserDone(shouldSave:Boolean){
-        if (shouldSave){
+    fun onEditUserDone(shouldSave: Boolean) {
+        if (shouldSave) {
             _userInEdit.value?.let {
                 updateUserInfo(it)
             }
-            _userInEdit.value=null
-        }else{
-            _userInEdit.value=null
+            _userInEdit.value = null
+        } else {
+            _userInEdit.value = null
         }
     }
 
-    private fun updateUserInfo(user: User){
+    private fun updateUserInfo(user: User) {
         try {
             viewModelScope.launch {
                 repository.updateUserInfo(user)
             }
-        }catch (t:Throwable){
+        } catch (t: Throwable) {
             Log.d(TAG, "updateUserInfo: Error")
             t.printStackTrace()
         }
@@ -262,24 +265,24 @@ class MainViewModel @ViewModelInject constructor(
 
     fun getUserInfo() = repository.getUserInfo()
         .catch {
-        Log.d(TAG, "getUserInfo: Error")
-        emit(DataState.failed("Error Getting User Info"))
-    }.map { state ->
-        if (state is DataState.Failed) {
-            _isUserSignedIn.value = false
+            Log.d(TAG, "getUserInfo: Error")
+            emit(DataState.failed("Error Getting User Info"))
+        }.map { state ->
+            if (state is DataState.Failed) {
+                _isUserSignedIn.value = false
+            }
+            state
         }
-        state
-    }
 
 
     fun signOutUser() {
-        _isUserSignedIn.value=false
+        _isUserSignedIn.value = false
         FirebaseAuthUtil.signOut()
     }
 
     fun bufferPhoto(uri: Uri) {
-        val tmpUser=_userInEdit.value?.copy(pictureUri = uri)
-        _userInEdit.value= tmpUser
+        val tmpUser = _userInEdit.value?.copy(pictureUri = uri)
+        _userInEdit.value = tmpUser
     }
 }
 
