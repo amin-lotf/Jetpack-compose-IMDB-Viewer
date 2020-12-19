@@ -17,4 +17,6 @@ Requirements
 -----
 1. you need to use the latest [Canary version of Android Studio](https://developer.android.com/studio/preview)
 
-2. API Key from [TMDB](https://www.themoviedb.org). for more info check the [Documentation](https://developers.themoviedb.org/3/getting-started/introduction)
+2. API Key from [TMDB](https://www.themoviedb.org)(Add it to utils/Keys.kt). for more info check the [Documentation](https://developers.themoviedb.org/3/getting-started/introduction)
+
+3. Add the Firebase Android configuration file to your app
